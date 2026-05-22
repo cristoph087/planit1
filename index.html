@@ -222,6 +222,18 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
 .toast.ok{background:var(--ok);}
 .toast.err{background:var(--err);}
+.watermark{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:48px 20px;text-align:center;}
+.wm-mark{font-size:5rem;color:var(--navy);opacity:.06;line-height:1;margin-bottom:12px;}
+.wm-text{font-family:'Playfair Display',serif;font-size:1.3rem;color:var(--navy);opacity:.2;margin-bottom:6px;}
+.wm-sub{font-size:.78rem;color:var(--muted);opacity:.5;}
+.wm-mark-sm{font-size:.85rem;font-weight:600;color:var(--muted);opacity:.3;padding:24px 0;}
+.srv-sel{border:none;background:transparent;font-size:.82rem;color:var(--muted);font-family:'DM Sans',sans-serif;cursor:pointer;outline:none;text-align:right;}
+.emoji-picker-wrap{margin-bottom:8px;}
+.emoji-picker-summary{font-size:.78rem;font-weight:600;color:var(--navy);cursor:pointer;padding:8px 12px;background:var(--bg);border-radius:10px;list-style:none;user-select:none;}
+.emoji-picker-summary::-webkit-details-marker{display:none;}
+.emoji-picker-grid{background:var(--bg);border-radius:10px;padding:10px;margin-top:4px;display:flex;flex-wrap:wrap;gap:4px;max-height:200px;overflow-y:auto;}
+.emoji-cat-lbl{width:100%;font-size:.62rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:6px 0 2px;padding-left:2px;}
+.emoji-cat-lbl:first-child{margin-top:0;}
 </style>
 </head>
 <body>
@@ -327,9 +339,38 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
       <div class="msec hidden" id="mas-ajustes">
         <div class="scard"><div class="sav" id="s-av">?</div><div class="sname" id="s-nm">-</div><div class="semail" id="s-em">-</div></div>
         <div class="scard">
-          <div class="srow"><div class="srl">Región</div><div class="srv">España</div></div>
-          <div class="srow"><div class="srl">Moneda</div><div class="srv">€ Euro</div></div>
-          <div class="srow"><div class="srl">Primer día</div><div class="srv">Lunes</div></div>
+          <div class="srow">
+            <div class="srl">Región</div>
+            <select class="srv-sel" id="cfg-region" onchange="saveCfg()">
+              <option value="es">🇪🇸 España</option>
+              <option value="mx">🇲🇽 México</option>
+              <option value="ar">🇦🇷 Argentina</option>
+              <option value="co">🇨🇴 Colombia</option>
+              <option value="cl">🇨🇱 Chile</option>
+              <option value="pe">🇵🇪 Perú</option>
+              <option value="us">🇺🇸 Estados Unidos</option>
+              <option value="uk">🇬🇧 Reino Unido</option>
+            </select>
+          </div>
+          <div class="srow">
+            <div class="srl">Moneda</div>
+            <select class="srv-sel" id="cfg-moneda" onchange="saveCfg()">
+              <option value="EUR">€ Euro</option>
+              <option value="USD">$ Dólar</option>
+              <option value="GBP">£ Libra</option>
+              <option value="MXN">$ Peso MX</option>
+              <option value="ARS">$ Peso AR</option>
+              <option value="COP">$ Peso CO</option>
+            </select>
+          </div>
+          <div class="srow">
+            <div class="srl">Primer día</div>
+            <select class="srv-sel" id="cfg-firstday" onchange="saveCfg()">
+              <option value="1">Lunes</option>
+              <option value="0">Domingo</option>
+              <option value="6">Sábado</option>
+            </select>
+          </div>
         </div>
         <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
       </div>
@@ -373,22 +414,31 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
 <div id="m-create" class="overlay hidden" onclick="if(event.target===this)hideModal('m-create')">
   <div class="mcard">
     <div class="mtit">Nuevo grupo</div>
-    <span class="flbl">Emoji</span>
-    <div class="erow">
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🏠</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">👫</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">✈️</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🎾</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">💼</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🎉</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🏃</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🧑‍🤝‍🧑</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🏋️</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🎮</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🍕</span>
-      <span class="eopt" onclick="document.getElementById('ng-e').value=this.textContent">🐾</span>
-    </div>
-    <input id="ng-e" class="min" placeholder="Emoji" maxlength="2" value="👥">
+    <span class="flbl">Emoji del grupo</span>
+    <details class="emoji-picker-wrap">
+      <summary class="emoji-picker-summary">Elegir emoji ▾</summary>
+      <div class="emoji-picker-grid">
+        <div class="emoji-cat-lbl">Personas y grupos</div>
+        <span class="eopt" onclick="pickEmoji(this)">👥</span><span class="eopt" onclick="pickEmoji(this)">👫</span><span class="eopt" onclick="pickEmoji(this)">👨‍👩‍👧</span><span class="eopt" onclick="pickEmoji(this)">👨‍👩‍👧‍👦</span><span class="eopt" onclick="pickEmoji(this)">🧑‍🤝‍🧑</span><span class="eopt" onclick="pickEmoji(this)">👶</span><span class="eopt" onclick="pickEmoji(this)">🧑‍💼</span><span class="eopt" onclick="pickEmoji(this)">🤝</span>
+        <div class="emoji-cat-lbl">Hogar y lugares</div>
+        <span class="eopt" onclick="pickEmoji(this)">🏠</span><span class="eopt" onclick="pickEmoji(this)">🏡</span><span class="eopt" onclick="pickEmoji(this)">🏢</span><span class="eopt" onclick="pickEmoji(this)">🏖️</span><span class="eopt" onclick="pickEmoji(this)">🏕️</span><span class="eopt" onclick="pickEmoji(this)">🏔️</span><span class="eopt" onclick="pickEmoji(this)">🌍</span><span class="eopt" onclick="pickEmoji(this)">🗺️</span>
+        <div class="emoji-cat-lbl">Deporte y actividad</div>
+        <span class="eopt" onclick="pickEmoji(this)">🏃</span><span class="eopt" onclick="pickEmoji(this)">🏋️</span><span class="eopt" onclick="pickEmoji(this)">🎾</span><span class="eopt" onclick="pickEmoji(this)">⚽</span><span class="eopt" onclick="pickEmoji(this)">🏀</span><span class="eopt" onclick="pickEmoji(this)">🎯</span><span class="eopt" onclick="pickEmoji(this)">🚴</span><span class="eopt" onclick="pickEmoji(this)">🏊</span><span class="eopt" onclick="pickEmoji(this)">🧘</span><span class="eopt" onclick="pickEmoji(this)">🥊</span><span class="eopt" onclick="pickEmoji(this)">🏄</span><span class="eopt" onclick="pickEmoji(this)">⛷️</span>
+        <div class="emoji-cat-lbl">Viajes y transporte</div>
+        <span class="eopt" onclick="pickEmoji(this)">✈️</span><span class="eopt" onclick="pickEmoji(this)">🚗</span><span class="eopt" onclick="pickEmoji(this)">🚂</span><span class="eopt" onclick="pickEmoji(this)">🚢</span><span class="eopt" onclick="pickEmoji(this)">🏍️</span><span class="eopt" onclick="pickEmoji(this)">🛻</span><span class="eopt" onclick="pickEmoji(this)">🗼</span><span class="eopt" onclick="pickEmoji(this)">🎡</span>
+        <div class="emoji-cat-lbl">Comida y bebida</div>
+        <span class="eopt" onclick="pickEmoji(this)">🍕</span><span class="eopt" onclick="pickEmoji(this)">🍺</span><span class="eopt" onclick="pickEmoji(this)">🍽️</span><span class="eopt" onclick="pickEmoji(this)">☕</span><span class="eopt" onclick="pickEmoji(this)">🍰</span><span class="eopt" onclick="pickEmoji(this)">🥗</span><span class="eopt" onclick="pickEmoji(this)">🌮</span><span class="eopt" onclick="pickEmoji(this)">🍣</span>
+        <div class="emoji-cat-lbl">Ocio y entretenimiento</div>
+        <span class="eopt" onclick="pickEmoji(this)">🎮</span><span class="eopt" onclick="pickEmoji(this)">🎬</span><span class="eopt" onclick="pickEmoji(this)">🎵</span><span class="eopt" onclick="pickEmoji(this)">🎨</span><span class="eopt" onclick="pickEmoji(this)">📚</span><span class="eopt" onclick="pickEmoji(this)">🎭</span><span class="eopt" onclick="pickEmoji(this)">🎪</span><span class="eopt" onclick="pickEmoji(this)">🎲</span>
+        <div class="emoji-cat-lbl">Trabajo y estudio</div>
+        <span class="eopt" onclick="pickEmoji(this)">💼</span><span class="eopt" onclick="pickEmoji(this)">💻</span><span class="eopt" onclick="pickEmoji(this)">📊</span><span class="eopt" onclick="pickEmoji(this)">🔬</span><span class="eopt" onclick="pickEmoji(this)">🎓</span><span class="eopt" onclick="pickEmoji(this)">📐</span><span class="eopt" onclick="pickEmoji(this)">🏫</span><span class="eopt" onclick="pickEmoji(this)">📝</span>
+        <div class="emoji-cat-lbl">Naturaleza y animales</div>
+        <span class="eopt" onclick="pickEmoji(this)">🐾</span><span class="eopt" onclick="pickEmoji(this)">🐶</span><span class="eopt" onclick="pickEmoji(this)">🐱</span><span class="eopt" onclick="pickEmoji(this)">🌿</span><span class="eopt" onclick="pickEmoji(this)">🌊</span><span class="eopt" onclick="pickEmoji(this)">🌸</span><span class="eopt" onclick="pickEmoji(this)">🦋</span><span class="eopt" onclick="pickEmoji(this)">🌙</span>
+        <div class="emoji-cat-lbl">Celebraciones</div>
+        <span class="eopt" onclick="pickEmoji(this)">🎉</span><span class="eopt" onclick="pickEmoji(this)">🎂</span><span class="eopt" onclick="pickEmoji(this)">💍</span><span class="eopt" onclick="pickEmoji(this)">🎁</span><span class="eopt" onclick="pickEmoji(this)">🥂</span><span class="eopt" onclick="pickEmoji(this)">🎊</span><span class="eopt" onclick="pickEmoji(this)">💐</span><span class="eopt" onclick="pickEmoji(this)">🪅</span>
+      </div>
+    </details>
+    <input id="ng-e" class="min" placeholder="Emoji seleccionado" maxlength="2" value="👥" style="margin-top:8px;">
     <span class="flbl">Nombre</span>
     <input id="ng-n" class="min" placeholder="Ej: Familia, Amigos, Viaje Roma...">
     <div class="macts">
@@ -487,6 +537,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
     </div>
     <div style="display:flex;gap:8px">
       <button class="btn-cancel" onclick="deleteItem()" style="color:var(--err);background:rgba(224,82,82,.08)">Eliminar</button>
+      <button class="btn-cancel" onclick="editItem()" style="color:var(--navy);background:rgba(20,33,61,.06)">Editar</button>
       <button class="btn-ok" id="d-done-btn" onclick="toggleFromDetail()">Completar</button>
     </div>
   </div>
@@ -521,6 +572,7 @@ const app=initializeApp(FB),auth=getAuth(app),db=getFirestore(app);
 let me=null,myGroups=[],allItems={},allGastos={},unsubs=[];
 let calY=new Date().getFullYear(),calM=new Date().getMonth();
 let curTab='inicio',filterGid='all',curItemId=null,curItemGid=null,addType='tarea';
+let editingItemId=null,editingItemGid=null;
 
 const COLORS=['#14213D','#2D9E6B','#C4613E','#4A5BAD','#8B5CF6','#0891B2','#D97706','#E05252'];
 const gColor=gid=>{const i=myGroups.findIndex(g=>g.id===gid);return COLORS[Math.max(0,i)%COLORS.length];};
@@ -549,6 +601,25 @@ const fmtE=n=>new Intl.NumberFormat('es-ES',{style:'currency',currency:'EUR'}).f
 const getEmoji=t=>{t=t.toLowerCase();if(/mercadona|lidl|supermercado|compra/.test(t))return'🛒';if(/médico|medico|doctor|pediatra|farmacia/.test(t))return'💊';if(/cena|cenar|restaurante|pizza/.test(t))return'🍽️';if(/gasolina/.test(t))return'🚗';if(/luz|electricidad|agua|gas/.test(t))return'⚡';if(/viaje|vuelo|hotel/.test(t))return'✈️';if(/gym|crossfit|pádel|padel|correr|fútbol|futbol/.test(t))return'🏃';if(/cumpleaños|fiesta/.test(t))return'🎉';if(/trabajo|reunión/.test(t))return'💼';if(/cerveza|bar|copa|vino/.test(t))return'🍺';if(/cine|teatro|concierto|entradas/.test(t))return'🎬';if(/cole|colegio/.test(t))return'📚';return'📌';};
 
 function toast(msg,type=''){const el=document.createElement('div');el.className='toast'+(type?' '+type:'');el.textContent=msg;document.body.appendChild(el);setTimeout(()=>el.classList.add('show'),10);setTimeout(()=>{el.classList.remove('show');setTimeout(()=>el.remove(),300);},2800);}
+
+window.pickEmoji=function(el){
+  $('ng-e').value=el.textContent;
+  el.closest('details').removeAttribute('open');
+};
+
+window.saveCfg=function(){
+  const cfg={region:$('cfg-region')?.value||'es',moneda:$('cfg-moneda')?.value||'EUR',firstday:$('cfg-firstday')?.value||'1'};
+  localStorage.setItem('planit-cfg',JSON.stringify(cfg));
+};
+
+function loadCfg(){
+  try{
+    const cfg=JSON.parse(localStorage.getItem('planit-cfg')||'{}');
+    if($('cfg-region')&&cfg.region) $('cfg-region').value=cfg.region;
+    if($('cfg-moneda')&&cfg.moneda) $('cfg-moneda').value=cfg.moneda;
+    if($('cfg-firstday')&&cfg.firstday) $('cfg-firstday').value=cfg.firstday;
+  }catch(e){}
+}
 
 window.showModal=id=>$(id)?.classList.remove('hidden');
 window.hideModal=id=>$(id)?.classList.add('hidden');
@@ -604,27 +675,33 @@ window.doLogout=async()=>{
 
 window.openProfile=()=>{$('p-av').textContent=ini(me?.displayName);$('p-name').textContent=me?.displayName||'-';$('p-email').textContent=me?.email||'-';openSheet('sh-profile');};
 
+// Track sub-listeners separately so we can restart them when groups change
+let dataUnsubs=[];
+
 function startListening(){
   unsubs.forEach(u=>u());unsubs=[];
+  dataUnsubs.forEach(u=>u());dataUnsubs=[];
+
   const u=onSnapshot(query(collection(db,'groups'),where('members','array-contains',me.uid)),snap=>{
     myGroups=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderGroupsRow();
     renderMasGrupos();
+
+    // Restart all data listeners when groups change
+    dataUnsubs.forEach(u=>u());dataUnsubs=[];
+
     myGroups.forEach(g=>{
       const u1=onSnapshot(collection(db,'groups',g.id,'items'),s=>{
         allItems[g.id]=s.docs.map(d=>({id:d.id,groupId:g.id,groupName:g.name,groupEmoji:g.emoji||'👥',...d.data()}));
-        if(curTab==='inicio')renderInicio();
-        if(curTab==='calendario')renderCal();
+        renderInicio();
+        renderCal();
       });
       const u2=onSnapshot(collection(db,'groups',g.id,'gastos'),s=>{
         allGastos[g.id]=s.docs.map(d=>({id:d.id,groupId:g.id,groupName:g.name,groupEmoji:g.emoji||'👥',...d.data()}));
-        if(curTab==='gastos')renderGastos();
+        renderGastos();
       });
-      unsubs.push(u1,u2);
+      dataUnsubs.push(u1,u2);
     });
-    if(curTab==='inicio')renderInicio();
-    if(curTab==='calendario')renderCal();
-    if(curTab==='gastos')renderGastos();
   });
   unsubs.push(u);
 }
@@ -677,18 +754,31 @@ window.goTab=tab=>{
 function getItems(){let i=Object.values(allItems).flat();return filterGid==='all'?i:i.filter(x=>x.groupId===filterGid);}
 
 function renderInicio(){
+  if(curTab!=='inicio') return;
   const w=$('inicio-wrap');w.innerHTML='';
-  const all=getItems(),pending=all.filter(i=>!i.done),done=all.filter(i=>i.done);
-  if(!all.length){w.innerHTML='<p class="empty-big">Sin tareas todavía.<br>Pulsa <b>+</b> para añadir algo.</p>';return;}
-  const sinF=pending.filter(i=>!i.date);
-  const conF=pending.filter(i=>i.date).sort((a,b)=>{
-    const da=a.date?.toDate?a.date.toDate():new Date(a.date);
-    const db2=b.date?.toDate?b.date.toDate():new Date(b.date);
-    return da-db2;
-  });
-  if(sinF.length){w.appendChild(mkST('📌 Sin fecha'));sinF.forEach(i=>w.appendChild(mkLI(i)));}
-  if(conF.length){w.appendChild(mkST('📅 Con fecha'));conF.forEach(i=>w.appendChild(mkLI(i)));}
-  if(done.length){w.appendChild(mkST('✅ Completados'));done.forEach(i=>w.appendChild(mkLI(i)));}
+  const all=getItems();
+  const sinF=all.filter(i=>!i.done&&!i.date);
+  const done=all.filter(i=>i.done);
+
+  if(sinF.length){
+    w.appendChild(mkST('📌 Sin fecha'));
+    sinF.forEach(i=>w.appendChild(mkLI(i)));
+  }
+  if(done.length){
+    w.appendChild(mkST('✅ Completados'));
+    done.forEach(i=>w.appendChild(mkLI(i)));
+  }
+
+  // Watermark — always shown at bottom
+  const wm=document.createElement('div');
+  wm.className='watermark';
+  if(!sinF.length && !done.length){
+    wm.innerHTML='<div class="wm-mark">✦</div><div class="wm-text">Todo bajo control</div><div class="wm-sub">Las tareas con fecha están en Calendario</div>';
+  } else {
+    wm.innerHTML='<div class="wm-mark-sm">✦ Planit</div>';
+  }
+  w.appendChild(wm);
+
   const pad=document.createElement('div');pad.style.height='80px';w.appendChild(pad);
 }
 
@@ -737,10 +827,44 @@ function openDetail(item){
   openSheet('sh-detail');
 }
 
+window.editItem=function(){
+  if(!curItemId) return;
+  const item=allItems[curItemGid]?.find(i=>i.id===curItemId);
+  if(!item) return;
+  closeSheet('sh-detail');
+  // Pre-fill the add form with existing data
+  addType='tarea';
+  qsa('.type-opt').forEach(o=>o.classList.toggle('active',o.dataset.type==='tarea'));
+  $('sec-tarea').classList.remove('hidden');
+  $('sec-gasto').classList.add('hidden');
+  // Fill group
+  const sel=$('a-group');sel.innerHTML='';
+  myGroups.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=g.emoji+' '+g.name;if(g.id===curItemGid)o.selected=true;sel.appendChild(o);});
+  onGrpChange();
+  // Fill fields
+  $('a-title').value=item.title||'';
+  if(item.date){
+    const d=item.date.toDate?item.date.toDate():new Date(item.date);
+    $('a-date').value=d.toISOString().split('T')[0];
+    const h=d.getHours(),m=d.getMinutes();
+    if(h||m) $('a-time').value=String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+  }
+  $('a-notes').value=item.notes||'';
+  setTimeout(()=>{
+    const asel=$('a-assignee');
+    if(item.assignedTo) asel.value=item.assignedTo;
+  },100);
+  // Switch doAdd to update mode
+  editingItemId=curItemId;
+  editingItemGid=curItemGid;
+  openSheet('sh-add');
+};
+
 window.toggleFromDetail=async()=>{if(!curItemId)return;const item=allItems[curItemGid]?.find(i=>i.id===curItemId);if(!item)return;await toggleItem(curItemId,curItemGid,!item.done);closeSheet('sh-detail');};
 window.deleteItem=async()=>{if(!curItemId||!confirm('¿Eliminar?'))return;await deleteDoc(doc(db,'groups',curItemGid,'items',curItemId));closeSheet('sh-detail');toast('Eliminado');};
 
 function renderCal(){
+  if(curTab!=='calendario') return;
   $('cal-lbl').textContent=new Date(calY,calM).toLocaleDateString('es-ES',{month:'long',year:'numeric'});
   const grid=$('cal-grid');grid.innerHTML='';
   const first=new Date(calY,calM,1),last=new Date(calY,calM+1,0),sdow=(first.getDay()+6)%7,today=new Date();
@@ -797,6 +921,7 @@ window.calPrev=()=>{calM--;if(calM<0){calM=11;calY--;}renderCal();};
 window.calNext=()=>{calM++;if(calM>11){calM=0;calY++;}renderCal();};
 
 function renderGastos(){
+  if(curTab!=='gastos') return;
   let total=0,meDeben=0,debo=0;
   const body=$('gastos-body');body.innerHTML='';
   myGroups.forEach(g=>{
@@ -858,7 +983,7 @@ function renderMasGrupos(){
 window.masTab=tab=>{
   qsa('.mtab').forEach(t=>t.classList.toggle('active',t.textContent.includes({grupos:'Grupos',ajustes:'Ajustes',notifs:'Notificaciones',ayuda:'Ayuda'}[tab]||tab)));
   ['grupos','ajustes','notifs','ayuda'].forEach(t=>$('mas-'+t)?.classList.toggle('hidden',t!==tab));
-  if(tab==='ajustes'){$('s-av').textContent=ini(me?.displayName);$('s-nm').textContent=me?.displayName||'-';$('s-em').textContent=me?.email||'-';}
+  if(tab==='ajustes'){$('s-av').textContent=ini(me?.displayName);$('s-nm').textContent=me?.displayName||'-';$('s-em').textContent=me?.email||'-';setTimeout(loadCfg,50);}
 };
 
 window.copyCode=(code,name)=>{navigator.clipboard.writeText(code).then(()=>toast('Código de '+name+': '+code,'ok')).catch(()=>toast('Código: '+code,''));};
@@ -878,6 +1003,7 @@ window.joinGroup=async()=>{
 };
 
 window.openAdd=()=>{
+  editingItemId=null;editingItemGid=null;
   addType='tarea';
   qsa('.type-opt').forEach(o=>o.classList.toggle('active',o.dataset.type==='tarea'));
   $('sec-tarea').classList.remove('hidden');
@@ -912,6 +1038,25 @@ window.doAdd=async()=>{
   if(!title)return toast('Escribe un título','err');
   const g=myGroups.find(x=>x.id===gid)||{};
   let gastoId=null,gastoTitulo=null,gastoImporte=null;
+
+  // EDIT MODE — update existing item
+  if(editingItemId){
+    const dateVal=$('a-date').value,timeVal=$('a-time').value;
+    const notes=$('a-notes').value.trim(),assignedTo=$('a-assignee').value;
+    let finalDate=null;
+    if(dateVal){finalDate=new Date(dateVal);if(timeVal){const[hh,mm]=timeVal.split(':');finalDate.setHours(parseInt(hh),parseInt(mm),0,0);}}
+    try{
+      await updateDoc(doc(db,'groups',editingItemGid,'items',editingItemId),{
+        title,emoji:getEmoji(title),date:finalDate,
+        notes:notes||null,assignedTo:assignedTo||null
+      });
+      closeSheet('sh-add');
+      $('a-title').value='';$('a-date').value='';$('a-time').value='';$('a-notes').value='';
+      editingItemId=null;editingItemGid=null;
+      toast('Actualizado ✓','ok');
+    }catch(e){toast('Error al actualizar','err');}
+    return;
+  }
 
   if(addType==='gasto'||addType==='ambos'){
     const importe=parseFloat($('a-importe').value),payerId=$('a-payer').value;
