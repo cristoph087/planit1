@@ -694,18 +694,45 @@ function renderInicio(){
     }
     w.appendChild(wm);
   } else {
-    // Vista grupo: tareas CON fecha pendientes, orden cronológico
+    // Vista grupo: tareas CON fecha + gastos del grupo
     const conF=all.filter(i=>!i.done&&i.date).sort((a,b)=>{
       const da=a.date?.toDate?a.date.toDate():new Date(a.date);
       const db2=b.date?.toDate?b.date.toDate():new Date(b.date);
       return da-db2;
     });
+    const gastos=(allGastos[filterGid]||[]).sort((a,b)=>(b.createdAt?.seconds||0)-(a.createdAt?.seconds||0));
+
     if(conF.length){
-      w.appendChild(mkST('📅 Próximas tareas'));
+      w.appendChild(mkST('📅 Tareas'));
       conF.forEach(i=>w.appendChild(mkLI(i)));
-    } else {
+    }
+
+    if(gastos.length){
+      w.appendChild(mkST('💸 Gastos'));
+      gastos.forEach(ga=>{
+        const g=myGroups.find(g=>g.id===filterGid)||{};
+        const c=gColor(filterGid);
+        const div=document.createElement('div');
+        div.className='litem';
+        div.style.borderLeftColor=c;
+        div.innerHTML=`
+          <div style="font-size:1.3rem">${ga.emoji||'💶'}</div>
+          <div class="lbody">
+            <div class="ltit">${ga.titulo}</div>
+            <div class="lmeta">
+              <span class="tag tag-d">${fmtE(ga.importe)}</span>
+              <span class="tag" style="background:${c};color:white;">Pagó ${ga.payerName||'?'}</span>
+              <span class="tag tag-nd">${ga.saldado?'✓ Saldado':'Pendiente'}</span>
+            </div>
+          </div>
+        `;
+        w.appendChild(div);
+      });
+    }
+
+    if(!conF.length && !gastos.length){
       const wm=document.createElement('div');wm.className='watermark';
-      wm.innerHTML='<div class="wm-icon">✦</div><div class="wm-title">Sin eventos con fecha</div><div class="wm-desc">Pulsa + para añadir algo a este grupo</div>';
+      wm.innerHTML='<div class="wm-icon">✦</div><div class="wm-title">Sin actividad</div><div class="wm-desc">Pulsa + para añadir algo a este grupo</div>';
       w.appendChild(wm);
     }
   }
