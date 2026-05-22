@@ -260,7 +260,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
       <button class="avbtn" id="main-av" onclick="openProfile()">?</button>
     </div>
     <div class="grp-row">
-      <div class="grp-todos" id="btn-todos" onclick="setFilter('all')">
+      <div class="grp-todos" id="btn-todos" onclick="resetToAll()">
         <div class="grp-todos-lbl">TODOS</div>
       </div>
       <div class="grp-scroll" id="grp-scroll"></div>
@@ -354,7 +354,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
   <button class="fab" onclick="openAdd()">+</button>
 
   <div class="tab-bar">
-    <div class="btab active" data-tab="inicio" onclick="goTab('inicio')">
+    <div class="btab active" data-tab="inicio" onclick="resetToAll()">
       <div class="btab-ico">🏠</div><div class="btab-lbl">Inicio</div><div class="btab-dot"></div>
     </div>
     <div class="btab" data-tab="calendario" onclick="goTab('calendario')">
@@ -441,7 +441,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
       <span class="flbl" style="margin-top:0">Fecha (opcional)</span>
       <div class="fecha-hora-row">
         <input id="a-date" class="min" type="date" style="background:white;">
-        <input id="a-time" class="min hora-input" type="time" style="background:white;" placeholder="Hora">
+        <input id="a-time" class="min hora-input" type="time" style="background:white;" step="60" placeholder="Hora">
       </div>
       <span class="flbl">Asignar a (opcional)</span>
       <select id="a-assignee" class="min" style="background:white;"></select>
@@ -647,11 +647,19 @@ function renderGroupsRow(){
 }
 
 function setFilter(gid){
-  filterGid=gid;renderGroupsRow();
+  filterGid=gid;
+  renderGroupsRow();
   if(curTab==='inicio')renderInicio();
   if(curTab==='calendario')renderCal();
   if(curTab==='gastos')renderGastos();
 }
+
+// Make TODOS button always clickable and reset filter
+window.resetToAll=function(){
+  filterGid='all';
+  renderGroupsRow();
+  goTab('inicio');
+};
 
 window.goTab=tab=>{
   qsa('.tab-pane').forEach(p=>{p.classList.remove('active');p.style.display='none';});
@@ -744,7 +752,7 @@ function renderCal(){
     div.className='cc'+(om?' om':'')+(date.toDateString()===today.toDateString()?' today':'');
     const evs=calItems.filter(i=>{const d=i.date?.toDate?i.date.toDate():new Date(i.date);return d.toDateString()===date.toDateString();});
     const num=document.createElement('div');num.className='cn'+(date.toDateString()===today.toDateString()?' tod':'');num.textContent=date.getDate();div.appendChild(num);
-    evs.slice(0,3).forEach(ev=>{const p=document.createElement('div');p.className='cep';const c=gColor(ev.groupId);p.style.borderLeftColor=c;p.style.background=c+'15';p.innerHTML=`<span>${ev.emoji||'📌'} ${ev.title}</span>`;div.appendChild(p);});
+    evs.slice(0,3).forEach(ev=>{const p=document.createElement('div');p.className='cep';const c=gColor(ev.groupId);p.style.borderLeftColor=c;p.style.background=c+'15';p.innerHTML=`<span>${ev.emoji||'📌'} ${ev.title.length>6?ev.title.substring(0,6)+'...':ev.title}</span>`;div.appendChild(p);});
     if(evs.length>3){const m=document.createElement('div');m.className='cm';m.textContent='+'+(evs.length-3);div.appendChild(m);}
     div.onclick=()=>{qsa('.cc').forEach(c=>c.classList.remove('sel'));div.classList.add('sel');showDay(date,calItems);};
     return div;
