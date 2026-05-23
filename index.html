@@ -49,10 +49,10 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
 
 /* GROUPS ROW */
 .grp-row{display:flex;gap:7px;align-items:stretch;padding-bottom:14px;}
-.grp-todos{flex-shrink:0;background:var(--gold);border-radius:12px;padding:10px 14px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid transparent;transition:all .2s;}
+.grp-todos{flex-shrink:0;background:var(--gold);border-radius:12px;padding:8px 14px;display:flex;align-items:center;justify-content:center;cursor:pointer;border:3px solid transparent;transition:all .2s;min-width:52px;}
 .grp-todos.inactive{background:rgba(255,255,255,.1);border-color:transparent;}
-.grp-todos-lbl{font-size:11px;font-weight:700;color:var(--navy);letter-spacing:.04em;}
-.grp-todos.inactive .grp-todos-lbl{color:rgba(255,255,255,.7);}
+.grp-todos-lbl{font-size:1.3rem;font-weight:700;color:var(--navy);letter-spacing:.04em;line-height:1;}
+.grp-todos.inactive .grp-todos-lbl{color:rgba(255,255,255,.5);}
 .grp-scroll{display:flex;gap:7px;overflow-x:auto;scrollbar-width:none;flex:1;}
 .grp-scroll::-webkit-scrollbar{display:none;}
 .grp-card{flex-shrink:0;width:64px;border-radius:12px;padding:8px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;transition:all .2s;border:3px solid transparent;}
@@ -380,7 +380,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
     </div>
     <div class="grp-row">
       <div class="grp-todos" id="btn-todos" onclick="resetToAll()">
-        <div class="grp-todos-lbl">Grupos</div>
+        <div class="grp-todos-lbl">✦</div>
       </div>
       <div class="grp-scroll" id="grp-scroll"></div>
     </div>
@@ -1316,8 +1316,9 @@ function renderPlanes(){
       const nGastos=p.gastos.length;
       const gaIds=gastosTeDebem.map(item=>({id:item.ga.id,gid:item.ga.groupId}));
 
-      const mkDetRow=(item)=>`
-        <div class="det-row">
+      const mkDetRow=(item)=>{
+        const rowId='detrow-'+item.ga.id;
+        return `<div class="det-row" id="${rowId}" style="cursor:pointer;">
           <div class="det-ico">${item.ga.emoji||'💶'}</div>
           <div class="det-info">
             <div class="det-title">${item.ga.titulo}</div>
@@ -1325,9 +1326,10 @@ function renderPlanes(){
           </div>
           <div class="det-right">
             <div class="det-amt ${item.iOwe?'neg':'pos'}">${item.iOwe?'-':'+'}${fmtE(item.amt)}</div>
-            <div class="det-tag ${item.ga.saldado?'ok':'pend'}">${item.ga.saldado?'✓ Saldado':'Pendiente'}</div>
+            <div class="det-tag ${item.ga.saldado?'ok':'pend'}">${item.ga.saldado?'✓ Saldado':'Pendiente'} ›</div>
           </div>
         </div>`;
+      };
 
       const teDebenRows=gastosTeDebem.map(mkDetRow).join('');
       const deboRows=gastosDebo.map(mkDetRow).join('');
@@ -1362,6 +1364,18 @@ function renderPlanes(){
           saldarPersona(gaIds);
         });
       }
+      // Make each det-row clickable — open linked item or gasto detail
+      p.gastos.forEach(item=>{
+        const row=card.querySelector(`#detrow-${item.ga.id}`);
+        if(!row)return;
+        row.addEventListener('click',e=>{
+          e.stopPropagation();
+          // Try to find linked item first
+          const linkedItem=Object.values(allItems).flat().find(i=>i.gastoId===item.ga.id);
+          if(linkedItem) openDetail(linkedItem);
+          else openGastoDetail(item.ga);
+        });
+      });
       return card;
     };
 
