@@ -828,19 +828,42 @@ function renderGroupsRow(){
 
 function updateAlertaBar(){
   const bar=$('alerta-bar'),txt=$('alerta-txt');if(!bar||!txt)return;
+  // Only use confirmed Firebase data — skip if no groups loaded yet
+  if(!myGroups.length){bar.classList.add('hidden');return;}
   const allG=Object.values(allGastos).flat();
   const allI=Object.values(allItems).flat();
   const now=new Date();now.setHours(0,0,0,0);
+
   const urgentes=allG.filter(ga=>{
-    if(ga.saldado)return false;
+    if(!ga.id||ga.saldado)return false;
+    // Only count if gasto belongs to a group we're member of
+    if(!myGroups.find(g=>g.id===ga.groupId))return false;
     const item=allI.find(i=>i.gastoId===ga.id);
-    return item&&item.date&&(item.date.toDate?item.date.toDate():new Date(item.date))<now;
+    if(!item||!item.date)return false;
+    const d=item.date.toDate?item.date.toDate():new Date(item.date);
+    // Must have actual pending amount for current user
+    const myAmt=ga.payerId===me.uid
+      ?Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0)
+      :(ga.deudas?.[me.uid]||0);
+    return d<now&&myAmt>0;
   });
+
   const pendientes=allG.filter(ga=>{
-    if(ga.saldado)return false;
-    const myAmt=ga.payerId===me.uid?Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0):(ga.deudas?.[me.uid]||0);
+    if(!ga.id||ga.saldado)return false;
+    if(!myGroups.find(g=>g.id===ga.groupId))return false;
+    const myAmt=ga.payerId===me.uid
+      ?Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0)
+      :(ga.deudas?.[me.uid]||0);
     return myAmt>0;
   });
+
+  // Reset styles
+  bar.style.background='#FFF5F5';
+  bar.style.borderBottomColor='rgba(224,82,82,.2)';
+  txt.style.color='var(--err)';
+  bar.querySelector('span:first-child').textContent='⚠️';
+  bar.querySelector('span:last-child').style.color='var(--err)';
+
   if(urgentes.length){
     bar.classList.remove('hidden');
     txt.textContent=`${urgentes.length} gasto${urgentes.length!==1?'s':''} de evento${urgentes.length!==1?'s':''} pasado${urgentes.length!==1?'s':''} sin saldar`;
