@@ -650,6 +650,9 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
         <div id="d-gasto-info" style="font-size:.85rem;color:var(--navy)"></div>
       </div>
     </div>
+    <div id="d-gasto-action" class="hidden" style="margin-bottom:8px;">
+      <button class="btn-ok" style="width:100%;background:var(--ok);" onclick="saldarGastoDesdeItem()">💸 Saldar gasto vinculado</button>
+    </div>
     <div style="display:flex;gap:8px">
       <button class="btn-cancel" onclick="deleteItem()" style="color:var(--err);background:rgba(224,82,82,.08)">Eliminar</button>
       <button class="btn-cancel" onclick="editItem()" style="color:var(--navy);background:rgba(20,33,61,.06)">Editar</button>
@@ -1005,9 +1008,16 @@ function openDetail(item){
         const yoDebo=gastoRef.deudas?.[me.uid]||0;
         if(yoDebo>0) gastoTxt+=` · Debes ${fmtE(yoDebo)}`;
       }
-    } else if(gastoRef?.saldado) gastoTxt+=' · ✓ Saldado';
+      $('d-gasto-action').classList.remove('hidden');
+    } else {
+      if(gastoRef?.saldado) gastoTxt+=' · ✓ Saldado';
+      $('d-gasto-action').classList.add('hidden');
+    }
     $('d-gasto-info').textContent=gastoTxt;
-  } else $('d-gasto-wrap').classList.add('hidden');
+  } else {
+    $('d-gasto-wrap').classList.add('hidden');
+    $('d-gasto-action').classList.add('hidden');
+  }
   openSheet('sh-detail');
 }
 
@@ -1036,25 +1046,34 @@ window.openGastoDetail=function(ga){
     if(yoDebo>0){estado.textContent=`Debes ${fmtE(yoDebo)}`;estado.style.color='var(--err)';}
     else{estado.textContent='✓ Al día';estado.style.color='var(--ok)';}
   }
-  $('dg-saldar-btn').textContent=ga.saldado?'Reabrir':'Saldar';
+  const dgBtn=$('dg-saldar-btn');
+  if(ga.saldado){dgBtn.textContent='Reabrir';dgBtn.style.background='var(--muted)';}
+  else{dgBtn.textContent='Saldar';dgBtn.style.background='var(--navy)';}
   openSheet('sh-gasto');
 };
 
 window.saldarDesdeDetalle=async()=>{
   if(!curGastoId)return;
-  const gastos=allGastos[curGastoGid]||[];
-  const ga=gastos.find(g=>g.id===curGastoId);
+  const gastoList=allGastos[curGastoGid]||[];
+  const ga=gastoList.find(g=>g.id===curGastoId);
   if(!ga)return;
   const newState=!ga.saldado;
-  if(newState&&!confirm('¿Marcar como saldado?'))return;
+  if(newState&&!confirm('¿Confirmar que este gasto queda saldado entre todos?'))return;
   await updateDoc(doc(db,'groups',curGastoGid,'gastos',curGastoId),{saldado:newState,saldadoAt:newState?serverTimestamp():null});
   closeSheet('sh-gasto');toast(newState?'¡Saldado! ✓':'Reabierto','ok');
 };
 
 window.deleteGasto=async()=>{
-  if(!curGastoId||!confirm('¿Eliminar este gasto?'))return;
-  await deleteDoc(doc(db,'groups',curGastoGid,'gastos',curGastoId));
-  closeSheet('sh-gasto');toast('Gasto eliminado');
+  if(!curGastoId||!confirm('¿Eliminar este gasto? Esta acción no se puede deshacer.'))return;
+  try{
+    await deleteDoc(doc(db,'groups',curGastoGid,'gastos',curGastoId));
+    // Also unlink from any item that references this gasto
+    const linkedItems=(allItems[curGastoGid]||[]).filter(i=>i.gastoId===curGastoId);
+    for(const item of linkedItems){
+      await updateDoc(doc(db,'groups',curGastoGid,'items',item.id),{gastoId:null,gastoTitulo:null,gastoImporte:null});
+    }
+    closeSheet('sh-gasto');toast('Gasto eliminado');
+  }catch(e){toast('Error al eliminar','err');}
 };
 
 window.editGasto=function(){
@@ -1338,13 +1357,24 @@ window.togglePersona=function(uid_key){
 };
 
 window.saldarPersona=async(gaIds)=>{
-  if(!confirm('¿Saldar todos los gastos de esta persona?'))return;
+  if(!confirm('¿Confirmar que todos estos gastos quedan saldados?'))return;
   try{
     for(const {id,gid} of gaIds){
       await updateDoc(doc(db,'groups',gid,'gastos',id),{saldado:true,saldadoAt:serverTimestamp()});
     }
     toast('¡Saldado todo! ✓','ok');
   }catch(e){toast('Error al saldar','err');}
+};
+
+window.saldarGastoDesdeItem=async()=>{
+  if(!curItemId)return;
+  const item=allItems[curItemGid]?.find(i=>i.id===curItemId);
+  if(!item?.gastoId)return;
+  if(!confirm('¿Confirmar que este gasto queda saldado entre todos?'))return;
+  try{
+    await updateDoc(doc(db,'groups',curItemGid,'gastos',item.gastoId),{saldado:true,saldadoAt:serverTimestamp()});
+    closeSheet('sh-detail');toast('¡Gasto saldado! ✓','ok');
+  }catch(e){toast('Error','err');}
 };
 
 window.saldar=async(id,gid)=>{if(!confirm('¿Marcar como saldado?'))return;await updateDoc(doc(db,'groups',gid,'gastos',id),{saldado:true,saldadoAt:serverTimestamp()});toast('¡Saldado! ✓','ok');};
