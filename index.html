@@ -993,8 +993,21 @@ function openDetail(item){
   $('d-assignee').textContent=g.memberNames?.[item.assignedTo]||'Sin asignar';
   $('d-notes').textContent=item.notes||'Sin notas';
   $('d-done-btn').textContent=item.done?'Reabrir':'Completar';
-  if(item.gastoId){$('d-gasto-wrap').classList.remove('hidden');$('d-gasto-info').textContent=(item.gastoTitulo||'')+' · '+fmtE(item.gastoImporte||0);}
-  else $('d-gasto-wrap').classList.add('hidden');
+  if(item.gastoId){
+    $('d-gasto-wrap').classList.remove('hidden');
+    const gastoRef=(allGastos[item.groupId]||[]).find(g=>g.id===item.gastoId);
+    let gastoTxt=(item.gastoTitulo||'')+' · '+fmtE(item.gastoImporte||0);
+    if(gastoRef&&!gastoRef.saldado){
+      if(gastoRef.payerId===me.uid){
+        const meDeben=Object.values(gastoRef.deudas||{}).reduce((s,v)=>s+v,0);
+        gastoTxt+=` · Te deben ${fmtE(meDeben)}`;
+      } else {
+        const yoDebo=gastoRef.deudas?.[me.uid]||0;
+        if(yoDebo>0) gastoTxt+=` · Debes ${fmtE(yoDebo)}`;
+      }
+    } else if(gastoRef?.saldado) gastoTxt+=' · ✓ Saldado';
+    $('d-gasto-info').textContent=gastoTxt;
+  } else $('d-gasto-wrap').classList.add('hidden');
   openSheet('sh-detail');
 }
 
@@ -1013,8 +1026,16 @@ window.openGastoDetail=function(ga){
   $('dg-importe').textContent=fmtE(ga.importe);
   $('dg-payer').textContent=ga.payerName||'?';
   const estado=$('dg-estado');
-  if(ga.saldado){estado.textContent='✓ Saldado';estado.style.color='var(--ok)';}
-  else{estado.textContent='Pendiente';estado.style.color='var(--err)';}
+  if(ga.saldado){
+    estado.textContent='✓ Saldado';estado.style.color='var(--ok)';
+  } else if(ga.payerId===me.uid){
+    const meDeben=Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0);
+    estado.textContent=`Te deben ${fmtE(meDeben)}`;estado.style.color='var(--ok)';
+  } else {
+    const yoDebo=ga.deudas?.[me.uid]||0;
+    if(yoDebo>0){estado.textContent=`Debes ${fmtE(yoDebo)}`;estado.style.color='var(--err)';}
+    else{estado.textContent='✓ Al día';estado.style.color='var(--ok)';}
+  }
   $('dg-saldar-btn').textContent=ga.saldado?'Reabrir':'Saldar';
   openSheet('sh-gasto');
 };
@@ -1141,7 +1162,10 @@ function renderPlanes(){
         const d=item.date.toDate?item.date.toDate():new Date(item.date);
         const daysAgo=Math.floor((now-d)/(1000*60*60*24));
         const div=document.createElement('div');div.className='pcard-vencido';
-        div.innerHTML=`<div class="vencido-bar"><span style="font-size:.9rem">⚠️</span><span class="vencido-bar-txt">Hace ${daysAgo} día${daysAgo!==1?'s':''} · Gasto pendiente</span><button class="btn-saldar-now" onclick="saldarDesdeItem('${gastoItem?.id}','${item.groupId}')">Saldar</button></div><div class="pcard-main"><div class="pcard-ico">${item.emoji||'📌'}</div><div class="pcard-info"><div class="pcard-title">${item.title}</div><div class="pcard-date" style="color:var(--err);font-weight:600">${fmtD(item.date)}</div>${gastoItem?`<div class="pcard-pago"><div class="pcard-pago-av" style="background:${color}">${ini(gastoItem.payerName||'?')}</div>Pagó ${gastoItem.payerName||'?'}</div>`:'</div>'}</div><div class="pcard-right"><div class="pcard-amt" style="color:var(--err)">${gastoItem?fmtE(gastoItem.importe):''}</div><div class="ptag ptag-pend">Pendiente</div></div></div>`;
+        const estoYoDebo=gastoItem&&gastoItem.payerId!==me.uid&&(gastoItem.deudas?.[me.uid]||0)>0;
+        const estoMeDeben=gastoItem&&gastoItem.payerId===me.uid;
+        const vencidoTag=estoYoDebo?`Debes ${fmtE(gastoItem.deudas?.[me.uid]||0)}`:(estoMeDeben?`Te deben ${fmtE(Object.values(gastoItem.deudas||{}).reduce((s,v)=>s+v,0))}`:'Pendiente');
+        div.innerHTML=`<div class="vencido-bar"><span style="font-size:.9rem">⚠️</span><span class="vencido-bar-txt">Hace ${daysAgo} día${daysAgo!==1?'s':''} · ${vencidoTag}</span><button class="btn-saldar-now" onclick="saldarDesdeItem('${gastoItem?.id}','${item.groupId}')">Saldar</button></div><div class="pcard-main"><div class="pcard-ico">${item.emoji||'📌'}</div><div class="pcard-info"><div class="pcard-title">${item.title}</div><div class="pcard-date" style="color:var(--err);font-weight:600">${fmtD(item.date)}</div>${gastoItem?`<div class="pcard-pago"><div class="pcard-pago-av" style="background:${color}">${ini(gastoItem.payerName||'?')}</div>Pagó ${gastoItem.payerName||'?'}</div>`:'</div>'}</div><div class="pcard-right"><div class="pcard-amt" style="color:var(--err)">${gastoItem?fmtE(gastoItem.importe):''}</div><div class="ptag ptag-pend">${vencidoTag}</div></div></div>`;
         div.onclick=()=>openDetail(item);
         body.appendChild(div);
       });
@@ -1157,7 +1181,17 @@ function renderPlanes(){
       let rightHtml='<div class="ptag ptag-sg">Sin gasto</div>';
       let pagoHtml='';
       if(gastoItem){
-        rightHtml=`<div class="pcard-amt">${fmtE(gastoItem.importe)}</div><div class="ptag ${gastoItem.saldado?'ptag-ok':'ptag-pend'}">${gastoItem.saldado?'✓ Saldado':'Pendiente'}</div>`;
+        let estadoTag='';
+        if(gastoItem.saldado){
+          estadoTag='<div class="ptag ptag-ok">✓ Saldado</div>';
+        } else if(gastoItem.payerId===me.uid){
+          const meDeben=Object.values(gastoItem.deudas||{}).reduce((s,v)=>s+v,0);
+          estadoTag=`<div class="ptag" style="background:rgba(45,158,107,.12);color:var(--ok)">Te deben ${fmtE(meDeben)}</div>`;
+        } else {
+          const yoDebo=gastoItem.deudas?.[me.uid]||0;
+          estadoTag=yoDebo>0?`<div class="ptag ptag-pend">Debes ${fmtE(yoDebo)}</div>`:'<div class="ptag ptag-ok">✓ Al día</div>';
+        }
+        rightHtml=`<div class="pcard-amt">${fmtE(gastoItem.importe)}</div>${estadoTag}`;
         pagoHtml=`<div class="pcard-pago"><div class="pcard-pago-av" style="background:${color}">${ini(gastoItem.payerName||'?')}</div>Pagó ${gastoItem.payerName||'?'}</div>`;
       }
       div.innerHTML=`<div class="pcard-main"><div class="pcard-ico">${item.emoji||'📌'}</div><div class="pcard-info"><div class="pcard-title">${item.title}</div><div class="pcard-date" style="${isPast?'color:var(--muted)':'color:var(--navy)'}">${fmtD(item.date)}</div>${pagoHtml}</div><div class="pcard-right">${rightHtml}</div></div>`;
@@ -1171,7 +1205,17 @@ function renderPlanes(){
       gastosLibres.forEach(ga=>{
         const color=gColor(ga.groupId);
         const div=document.createElement('div');div.className='pcard';div.style.borderLeftColor=color;
-        div.innerHTML=`<div class="pcard-main"><div class="pcard-ico">${ga.emoji||'💶'}</div><div class="pcard-info"><div class="pcard-title">${ga.titulo}</div><div class="pcard-date">${fmtD(ga.createdAt)||''} · ${ga.groupEmoji} ${ga.groupName}</div><div class="pcard-pago"><div class="pcard-pago-av" style="background:${color}">${ini(ga.payerName||'?')}</div>Pagó ${ga.payerName||'?'}</div></div><div class="pcard-right"><div class="pcard-amt">${fmtE(ga.importe)}</div><div class="ptag ${ga.saldado?'ptag-ok':'ptag-pend'}">${ga.saldado?'✓ Saldado':'Pendiente'}</div></div></div>`;
+        let estadoTag='';
+        if(ga.saldado){
+          estadoTag='<div class="ptag ptag-ok">✓ Saldado</div>';
+        } else if(ga.payerId===me.uid){
+          const meDeben=Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0);
+          estadoTag=`<div class="ptag" style="background:rgba(45,158,107,.12);color:var(--ok)">Te deben ${fmtE(meDeben)}</div>`;
+        } else {
+          const yoDebo=ga.deudas?.[me.uid]||0;
+          estadoTag=yoDebo>0?`<div class="ptag ptag-pend">Debes ${fmtE(yoDebo)}</div>`:'<div class="ptag ptag-ok">✓ Al día</div>';
+        }
+        div.innerHTML=`<div class="pcard-main"><div class="pcard-ico">${ga.emoji||'💶'}</div><div class="pcard-info"><div class="pcard-title">${ga.titulo}</div><div class="pcard-date">${fmtD(ga.createdAt)||''} · ${ga.groupEmoji} ${ga.groupName}</div><div class="pcard-pago"><div class="pcard-pago-av" style="background:${color}">${ini(ga.payerName||'?')}</div>Pagó ${ga.payerName||'?'}</div></div><div class="pcard-right"><div class="pcard-amt">${fmtE(ga.importe)}</div>${estadoTag}</div></div>`;
         div.onclick=()=>openGastoDetail(ga);
         body.appendChild(div);
       });
@@ -1225,39 +1269,46 @@ function renderPlanes(){
       const card=document.createElement('div');card.className='saldo-card';
       const uid_key=p.uid.replace(/[^a-zA-Z0-9]/g,'');
       const neto=Math.abs(p.neto);
+      const gastosTeDebem=p.gastos.filter(item=>!item.iOwe); // yo pagué, me deben
+      const gastosDebo=p.gastos.filter(item=>item.iOwe);     // ellos pagaron, yo debo
       const nGastos=p.gastos.length;
+      const gaIds=gastosTeDebem.map(item=>({id:item.ga.id,gid:item.ga.groupId}));
 
-      // Gather all groupIds for saldar
-      const gidList=[...new Set(p.gastos.filter(item=>!item.iOwe).map(item=>item.ga.groupId))];
-      const gaIds=p.gastos.filter(item=>!item.iOwe).map(item=>({id:item.ga.id,gid:item.ga.groupId}));
+      const mkDetRow=(item)=>`
+        <div class="det-row">
+          <div class="det-ico">${item.ga.emoji||'💶'}</div>
+          <div class="det-info">
+            <div class="det-title">${item.ga.titulo}</div>
+            <div class="det-sub">Pagó ${item.iOwe?p.name:'tú'} · ${fmtD(item.ga.createdAt)||''} · ${item.g.emoji||'👥'} ${item.g.name}</div>
+          </div>
+          <div class="det-right">
+            <div class="det-amt ${item.iOwe?'neg':'pos'}">${item.iOwe?'-':'+'}${fmtE(item.amt)}</div>
+            <div class="det-tag ${item.ga.saldado?'ok':'pend'}">${item.ga.saldado?'✓ Saldado':'Pendiente'}</div>
+          </div>
+        </div>`;
+
+      const teDebenRows=gastosTeDebem.map(mkDetRow).join('');
+      const deboRows=gastosDebo.map(mkDetRow).join('');
+      const detalleHtml=`
+        ${teDebenRows?`<div style="font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--ok);padding:8px 14px 4px;">Te deben</div>${teDebenRows}`:''}
+        ${deboRows?`<div style="font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--err);padding:8px 14px 4px;border-top:.5px solid #F5F5F5;">Tú debes</div>${deboRows}`:''}
+      `;
 
       card.innerHTML=`
         <div class="persona-hdr" onclick="togglePersona('${uid_key}')">
           <div class="persona-av" style="background:${p.color}">${ini(p.name)}</div>
           <div class="persona-info">
             <div class="persona-name">${p.name}</div>
-            <div class="persona-sub">${nGastos} pago${nGastos!==1?'s':''}</div>
+            <div class="persona-sub">Neto · ${nGastos} movimiento${nGastos!==1?'s':''}</div>
           </div>
           <div class="persona-right">
             <div class="persona-amt ${isDeuda?'neg':'pos'}">${isDeuda?'-':'+'}${fmtE(neto)}</div>
-            ${!isDeuda?`<button class="btn-saldar" onclick="event.stopPropagation();saldarPersona(${JSON.stringify(gaIds)})">Saldar todo</button>`:''}
+            ${gaIds.length?`<button class="btn-saldar" onclick="event.stopPropagation();saldarPersona(${JSON.stringify(gaIds)})">Saldar lo mío</button>`:''}
           </div>
           <span class="persona-arr" id="arr-${uid_key}">▾</span>
         </div>
         <div class="detalle" id="det-${uid_key}">
-          ${p.gastos.map(item=>`
-            <div class="det-row">
-              <div class="det-ico">${item.ga.emoji||'💶'}</div>
-              <div class="det-info">
-                <div class="det-title">${item.ga.titulo}</div>
-                <div class="det-sub">Pagó ${item.iOwe?p.name:'tú'} · ${fmtD(item.ga.createdAt)||''} · ${item.g.emoji||'👥'} ${item.g.name}</div>
-              </div>
-              <div class="det-right">
-                <div class="det-amt ${item.iOwe?'neg':'pos'}">${item.iOwe?'-':'+'}${fmtE(item.amt)}</div>
-                <div class="det-tag ${item.ga.saldado?'ok':'pend'}">${item.ga.saldado?'✓ Saldado':'Pendiente'}</div>
-              </div>
-            </div>
-          `).join('')}
+          ${detalleHtml}
         </div>
       `;
       return card;
