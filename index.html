@@ -194,6 +194,33 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
 .btn-saldar{background:var(--navy);color:var(--gold);border:none;border-radius:100px;padding:4px 10px;font-size:.65rem;font-weight:700;cursor:pointer;font-family:'DM Sans',sans-serif;}
 .btn-saldar.urgente{background:var(--err);}
 .saldo-ok{font-size:.82rem;color:var(--ok);font-weight:600;padding:12px 14px;text-align:center;}
+.persona-hdr{padding:12px 14px;display:flex;align-items:center;gap:10px;cursor:pointer;user-select:none;}
+.persona-hdr:active{background:#f8f8f8;}
+.persona-av{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;color:white;flex-shrink:0;}
+.persona-info{flex:1;}
+.persona-name{font-size:.9rem;font-weight:700;color:var(--navy);margin-bottom:2px;}
+.persona-sub{font-size:.68rem;color:var(--muted);}
+.persona-right{display:flex;flex-direction:column;align-items:flex-end;gap:5px;}
+.persona-amt{font-size:1rem;font-weight:700;}
+.persona-amt.pos{color:var(--ok);}
+.persona-amt.neg{color:var(--err);}
+.persona-arr{font-size:.8rem;color:#aaa;margin-left:4px;transition:transform .2s;display:inline-block;}
+.persona-arr.open{transform:rotate(180deg);}
+.detalle{display:none;border-top:1px solid #F0F0F0;}
+.detalle.open{display:block;}
+.det-row{padding:9px 14px;display:flex;align-items:flex-start;gap:8px;border-bottom:.5px solid #F8F8F8;}
+.det-row:last-child{border-bottom:none;}
+.det-ico{font-size:1.1rem;flex-shrink:0;margin-top:2px;}
+.det-info{flex:1;}
+.det-title{font-size:.82rem;font-weight:600;color:var(--navy);margin-bottom:2px;}
+.det-sub{font-size:.65rem;color:var(--muted);}
+.det-right{text-align:right;flex-shrink:0;}
+.det-amt{font-size:.85rem;font-weight:700;}
+.det-amt.pos{color:var(--ok);}
+.det-amt.neg{color:var(--err);}
+.det-tag{font-size:.6rem;padding:2px 6px;border-radius:100px;font-weight:600;margin-top:3px;display:inline-block;}
+.det-tag.pend{background:rgba(224,82,82,.1);color:var(--err);}
+.det-tag.ok{background:rgba(45,158,107,.1);color:var(--ok);}
 
 /* MÁS */
 .mas-tabs{background:white;border-bottom:1px solid #EBEBEB;display:flex;overflow-x:auto;scrollbar-width:none;padding:0 14px;flex-shrink:0;}
@@ -336,6 +363,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
       <div class="gbals">
         <div class="gbal pos"><div class="gbl">Te deben</div><div class="gba" id="p-meden">0€</div></div>
         <div class="gbal neg"><div class="gbl">Debes</div><div class="gba" id="p-debo">0€</div></div>
+        <div class="gbal" style="background:rgba(252,163,17,.15);cursor:pointer" onclick="planesTab('saldos')"><div class="gbl" style="color:#FCA311">Saldo ›</div><div class="gba" id="p-saldo" style="color:#FCA311">0€</div></div>
       </div>
     </div>
     <div class="inner-tabs">
@@ -486,29 +514,35 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
   <div class="sheet-in" id="sh-add-in">
     <div class="sh-hdl"></div>
     <div class="sh-tit" id="sh-add-tit">Añadir</div>
-    <div class="sh-sub">¿Qué quieres añadir?</div>
-    <div class="type-opts">
-      <div class="type-opt active" data-type="tarea" onclick="setType('tarea')"><div class="type-opt-ico">📋</div><div class="type-opt-lbl">Solo tarea</div></div>
-      <div class="type-opt" data-type="gasto" onclick="setType('gasto')"><div class="type-opt-ico">💸</div><div class="type-opt-lbl">Solo gasto</div></div>
-      <div class="type-opt" data-type="ambos" onclick="setType('ambos')"><div class="type-opt-ico">📋💸</div><div class="type-opt-lbl">Las dos</div></div>
-    </div>
     <span class="flbl">Grupo</span>
     <select id="a-group" class="min" onchange="onGrpChange()"></select>
     <span class="flbl">Título</span>
     <input id="a-title" class="min" placeholder="¿Qué es?">
-    <div id="sec-tarea" class="fsec fsec-tarea">
-      <div class="fsec-lbl">TAREA / PLAN</div>
-      <span class="flbl" style="margin-top:0">Fecha (opcional)</span>
-      <div class="fh-row">
+    <div class="fh-row" style="margin-top:12px;">
+      <div style="flex:1">
+        <span class="flbl" style="margin-top:0">Fecha</span>
         <input id="a-date" class="min" type="date" style="background:white;">
-        <input id="a-time" class="min hora-in" type="time" step="60" style="background:white;">
       </div>
-      <span class="flbl">Asignar a (opcional)</span>
-      <select id="a-assignee" class="min" style="background:white;"></select>
-      <span class="flbl">Notas (opcional)</span>
-      <input id="a-notes" class="min" placeholder="Notas..." style="background:white;">
+      <div style="flex:0 0 95px">
+        <span class="flbl" style="margin-top:0">Hora</span>
+        <input id="a-time" class="min" type="time" step="60" style="background:white;">
+      </div>
     </div>
-    <div id="sec-gasto" class="fsec fsec-gasto hidden">
+    <span class="flbl">Creado por</span>
+    <select id="a-assignee" class="min" style="background:white;"></select>
+    <span class="flbl">Notas (opcional)</span>
+    <input id="a-notes" class="min" placeholder="Notas..." style="background:white;">
+
+    <!-- TOGGLE GASTO -->
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding:14px;background:rgba(45,158,107,.06);border-radius:12px;border-left:4px solid var(--ok);cursor:pointer;" onclick="toggleGastoSection()">
+      <div>
+        <div style="font-size:.82rem;font-weight:700;color:var(--ok)">💸 ¿Tiene gasto?</div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:2px">Activa para dividir el gasto</div>
+      </div>
+      <div class="toggle" id="toggle-gasto" onclick="event.stopPropagation();toggleGastoSection()"></div>
+    </div>
+
+    <div id="sec-gasto" class="fsec fsec-gasto hidden" style="margin-top:8px;">
       <div class="fsec-lbl">GASTO</div>
       <span class="flbl" style="margin-top:0">Fecha del gasto</span>
       <input id="g-date" class="min" type="date" style="background:white;">
@@ -559,11 +593,6 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
     <div class="prof-av" id="p-av">?</div>
     <div class="prof-name" id="p-name">-</div>
     <div class="prof-email" id="p-email">-</div>
-    <div class="scard" style="margin-bottom:12px">
-      <div class="srow2"><div class="srl">🌍 Región</div><div class="srv">España</div></div>
-      <div class="srow2"><div class="srl">🎨 Paleta</div><div class="srv">Black & Gold</div></div>
-      <div class="srow2"><div class="srl">🌙 Modo oscuro</div><div class="toggle" onclick="this.classList.toggle('on')"></div></div>
-    </div>
     <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
   </div>
 </div>
@@ -660,7 +689,7 @@ function renderGroupsRow(){
     card.className='grp-card'+(filterGid===g.id?' active':'');
     card.style.background=color+(filterGid===g.id?'':'CC');
     card.innerHTML=`<div class="grp-card-emoji">${g.emoji||'👥'}</div><div class="grp-card-name">${g.name}</div>`;
-    card.onclick=()=>setFilter(g.id);
+    card.onclick=()=>setFilterAndNavigate(g.id);
     scroll.appendChild(card);
   });
   const add=document.createElement('div');add.className='grp-add';
@@ -670,6 +699,7 @@ function renderGroupsRow(){
 }
 
 function setFilter(gid){filterGid=gid;renderGroupsRow();if(curTab==='tareas')renderTareas();if(curTab==='calendario')renderCal();if(curTab==='planes')renderPlanes();}
+function setFilterAndNavigate(gid){filterGid=gid;goTab('planes');}
 window.resetToAll=()=>{filterGid='all';renderGroupsRow();goTab('tareas');};
 
 window.goTab=tab=>{
@@ -797,6 +827,8 @@ function renderPlanes(){
   });
   $('p-meden').textContent=fmtE(meDeben);
   $('p-debo').textContent=fmtE(debo);
+  const saldoNeto=meDeben-debo;
+  $('p-saldo').textContent=(saldoNeto>=0?'+':'')+fmtE(saldoNeto);
 
   const body=$('planes-body');body.innerHTML='';
 
@@ -873,75 +905,123 @@ function renderPlanes(){
     }
 
   } else {
-    // SALDOS
+    // SALDOS — neto por persona con desplegable
     const pendGastos=gastos.filter(g=>!g.saldado);
-    
-    // Urgentes: gastos con item asociado vencido
-    const urgentes=pendGastos.filter(ga=>{
-      const item=items.find(i=>i.gastoId===ga.id);
-      return item&&item.date&&isDatePast(item.date);
+
+    // Calcular neto por persona
+    const personMap={};
+    pendGastos.forEach(ga=>{
+      const g=myGroups.find(g=>g.id===ga.groupId)||{};
+      if(ga.payerId===me.uid){
+        // otros me deben
+        Object.entries(ga.deudas||{}).forEach(([uid,amt])=>{
+          if(uid===me.uid)return;
+          if(!personMap[uid])personMap[uid]={uid,name:g.memberNames?.[uid]||uid,color:gColor(ga.groupId),gastos:[]};
+          personMap[uid].gastos.push({ga,amt,iOwe:false,g});
+        });
+      } else {
+        // yo debo al pagador
+        const myAmt=ga.deudas?.[me.uid]||0;
+        if(myAmt>0){
+          const uid=ga.payerId;
+          if(!personMap[uid])personMap[uid]={uid,name:g.memberNames?.[uid]||ga.payerName||uid,color:gColor(ga.groupId),gastos:[]};
+          personMap[uid].gastos.push({ga,amt:myAmt,iOwe:true,g});
+        }
+      }
     });
 
-    // Normales: resto de pendientes
-    const normales=pendGastos.filter(ga=>!urgentes.includes(ga));
+    // Calcular neto por persona
+    const personas=Object.values(personMap).map(p=>{
+      p.neto=p.gastos.reduce((s,item)=>s+(item.iOwe?-item.amt:item.amt),0);
+      return p;
+    });
 
-    if(urgentes.length){
-      const sc=document.createElement('div');sc.className='saldo-card';
-      const sec=document.createElement('div');sec.className='saldo-sec urgente';sec.textContent='⚠️ Urgente · evento pasado';
-      sc.appendChild(sec);
-      urgentes.forEach(ga=>{
-        const isC=ga.payerId===me.uid;
-        const g=myGroups.find(g=>g.id===ga.groupId)||{};
-        const names=isC?Object.keys(ga.deudas||{}).map(uid=>g.memberNames?.[uid]||uid).join(', '):(g.memberNames?.[ga.payerId]||ga.payerName);
-        const amt=isC?Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0):(ga.deudas?.[me.uid]||0);
-        if(amt<=0)return;
-        const color=gColor(ga.groupId);
-        const row=document.createElement('div');row.className='saldo-row urgente-row';
-        row.innerHTML=`<div class="saldo-av" style="background:var(--err)">${ini(names)}</div><div class="saldo-info"><div class="saldo-name">${names}</div><div class="saldo-detail urgente">${ga.emoji||'💶'} ${ga.titulo} · ${ga.groupEmoji} ${ga.groupName}</div></div><div class="saldo-right"><div class="saldo-amt ${isC?'pos':'neg'}">${isC?'+':''}${fmtE(amt)}</div>${isC?`<button class="btn-saldar urgente" onclick="saldar('${ga.id}','${ga.groupId}')">Saldar ya</button>`:''}</div>`;
-        sc.appendChild(row);
-      });
-      body.appendChild(sc);
+    const teDeben=personas.filter(p=>p.neto>0).sort((a,b)=>b.neto-a.neto);
+    const debes=personas.filter(p=>p.neto<0).sort((a,b)=>a.neto-b.neto);
+
+    // Urgentes: personas con gastos de eventos pasados
+    const hayUrgentes=pendGastos.some(ga=>{const item=items.find(i=>i.gastoId===ga.id);return item&&item.date&&isDatePast(item.date);});
+    if(hayUrgentes){
+      const warn=document.createElement('div');
+      warn.style.cssText='background:#FFF5F5;border-radius:10px;padding:8px 12px;margin-bottom:10px;display:flex;align-items:center;gap:6px;border-left:3px solid var(--err)';
+      warn.innerHTML='<span style="font-size:1rem">⚠️</span><span style="font-size:.78rem;font-weight:700;color:var(--err)">Hay eventos pasados con gastos pendientes</span>';
+      body.appendChild(warn);
     }
 
-    // Te deben (normales)
-    const teDeben=normales.filter(ga=>ga.payerId===me.uid&&Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0)>0);
+    const mkPersonaCard=(p,isDeuda)=>{
+      const card=document.createElement('div');card.className='saldo-card';
+      const uid_key=p.uid.replace(/[^a-zA-Z0-9]/g,'');
+      const neto=Math.abs(p.neto);
+      const nGastos=p.gastos.length;
+
+      // Gather all groupIds for saldar
+      const gidList=[...new Set(p.gastos.filter(item=>!item.iOwe).map(item=>item.ga.groupId))];
+      const gaIds=p.gastos.filter(item=>!item.iOwe).map(item=>({id:item.ga.id,gid:item.ga.groupId}));
+
+      card.innerHTML=`
+        <div class="persona-hdr" onclick="togglePersona('${uid_key}')">
+          <div class="persona-av" style="background:${p.color}">${ini(p.name)}</div>
+          <div class="persona-info">
+            <div class="persona-name">${p.name}</div>
+            <div class="persona-sub">${nGastos} pago${nGastos!==1?'s':''}</div>
+          </div>
+          <div class="persona-right">
+            <div class="persona-amt ${isDeuda?'neg':'pos'}">${isDeuda?'-':'+'}${fmtE(neto)}</div>
+            ${!isDeuda?`<button class="btn-saldar" onclick="event.stopPropagation();saldarPersona(${JSON.stringify(gaIds)})">Saldar todo</button>`:''}
+          </div>
+          <span class="persona-arr" id="arr-${uid_key}">▾</span>
+        </div>
+        <div class="detalle" id="det-${uid_key}">
+          ${p.gastos.map(item=>`
+            <div class="det-row">
+              <div class="det-ico">${item.ga.emoji||'💶'}</div>
+              <div class="det-info">
+                <div class="det-title">${item.ga.titulo}</div>
+                <div class="det-sub">Pagó ${item.iOwe?p.name:'tú'} · ${fmtD(item.ga.createdAt)||''} · ${item.g.emoji||'👥'} ${item.g.name}</div>
+              </div>
+              <div class="det-right">
+                <div class="det-amt ${item.iOwe?'neg':'pos'}">${item.iOwe?'-':'+'}${fmtE(item.amt)}</div>
+                <div class="det-tag ${item.ga.saldado?'ok':'pend'}">${item.ga.saldado?'✓ Saldado':'Pendiente'}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      return card;
+    };
+
     if(teDeben.length){
-      const sc=document.createElement('div');sc.className='saldo-card';
-      const sec=document.createElement('div');sec.className='saldo-sec normal';sec.textContent='Te deben';sc.appendChild(sec);
-      teDeben.forEach(ga=>{
-        const g=myGroups.find(g=>g.id===ga.groupId)||{};
-        const names=Object.keys(ga.deudas||{}).map(uid=>g.memberNames?.[uid]||uid).join(', ');
-        const amt=Object.values(ga.deudas||{}).reduce((s,v)=>s+v,0);
-        const color=gColor(ga.groupId);
-        const row=document.createElement('div');row.className='saldo-row';
-        row.innerHTML=`<div class="saldo-av" style="background:${color}">${ini(names)}</div><div class="saldo-info"><div class="saldo-name">${names}</div><div class="saldo-detail">${ga.emoji||'💶'} ${ga.titulo} · ${ga.groupEmoji} ${ga.groupName}</div></div><div class="saldo-right"><div class="saldo-amt pos">+${fmtE(amt)}</div><button class="btn-saldar" onclick="saldar('${ga.id}','${ga.groupId}')">Saldar</button></div>`;
-        sc.appendChild(row);
-      });
-      body.appendChild(sc);
+      const lbl=document.createElement('div');lbl.className='saldo-sec normal';lbl.textContent='Te deben';body.appendChild(lbl);
+      teDeben.forEach(p=>body.appendChild(mkPersonaCard(p,false)));
     }
-
-    // Debes (normales)
-    const debes=normales.filter(ga=>ga.payerId!==me.uid&&(ga.deudas?.[me.uid]||0)>0);
     if(debes.length){
-      const sc=document.createElement('div');sc.className='saldo-card';
-      const sec=document.createElement('div');sec.className='saldo-sec normal';sec.textContent='Debes';sc.appendChild(sec);
-      debes.forEach(ga=>{
-        const g=myGroups.find(g=>g.id===ga.groupId)||{};
-        const payerName=g.memberNames?.[ga.payerId]||ga.payerName;
-        const amt=ga.deudas?.[me.uid]||0;
-        const color=gColor(ga.groupId);
-        const row=document.createElement('div');row.className='saldo-row';
-        row.innerHTML=`<div class="saldo-av" style="background:${color}">${ini(payerName)}</div><div class="saldo-info"><div class="saldo-name">${payerName}</div><div class="saldo-detail">${ga.emoji||'💶'} ${ga.titulo} · ${ga.groupEmoji} ${ga.groupName}</div></div><div class="saldo-right"><div class="saldo-amt neg">-${fmtE(amt)}</div></div>`;
-        sc.appendChild(row);
-      });
-      body.appendChild(sc);
+      const lbl=document.createElement('div');lbl.className='saldo-sec normal';lbl.style.marginTop='8px';lbl.textContent='Debes';body.appendChild(lbl);
+      debes.forEach(p=>body.appendChild(mkPersonaCard(p,true)));
     }
-
-    if(!urgentes.length&&!teDeben.length&&!debes.length){
-      body.innerHTML='<div class="saldo-ok" style="padding:40px;text-align:center;font-size:1rem;color:var(--ok)">🎉 ¡Todo saldado!</div>';
+    if(!teDeben.length&&!debes.length){
+      body.innerHTML='<div style="padding:50px 20px;text-align:center;font-size:1rem;color:var(--ok);font-weight:600">🎉 ¡Todo saldado!</div>';
     }
   }
 }
+
+window.togglePersona=function(uid_key){
+  const det=document.getElementById('det-'+uid_key);
+  const arr=document.getElementById('arr-'+uid_key);
+  if(!det||!arr)return;
+  const isOpen=det.classList.contains('open');
+  det.classList.toggle('open',!isOpen);
+  arr.classList.toggle('open',!isOpen);
+};
+
+window.saldarPersona=async(gaIds)=>{
+  if(!confirm('¿Saldar todos los gastos de esta persona?'))return;
+  try{
+    for(const {id,gid} of gaIds){
+      await updateDoc(doc(db,'groups',gid,'gastos',id),{saldado:true,saldadoAt:serverTimestamp()});
+    }
+    toast('¡Saldado todo! ✓','ok');
+  }catch(e){toast('Error al saldar','err');}
+};
 
 window.saldar=async(id,gid)=>{if(!confirm('¿Marcar como saldado?'))return;await updateDoc(doc(db,'groups',gid,'gastos',id),{saldado:true,saldadoAt:serverTimestamp()});toast('¡Saldado! ✓','ok');};
 window.saldarDesdeItem=async(gastoId,gid)=>{if(!gastoId)return;if(!confirm('¿Marcar como saldado?'))return;await updateDoc(doc(db,'groups',gid,'gastos',gastoId),{saldado:true,saldadoAt:serverTimestamp()});toast('¡Saldado! ✓','ok');};
@@ -1047,14 +1127,31 @@ window.openAdd=()=>{
   editingItemId=null;editingItemGid=null;
   $('sh-add-tit').textContent='Añadir';
   addType='tarea';
-  qsa('.type-opt').forEach(o=>o.classList.toggle('active',o.dataset.type==='tarea'));
-  $('sec-tarea').classList.remove('hidden');$('sec-gasto').classList.add('hidden');
+  // Reset gasto toggle
+  $('toggle-gasto').classList.remove('on');
+  $('sec-gasto').classList.add('hidden');
+  // Autofill today's date
+  const today=new Date();
+  $('a-date').value=today.toISOString().split('T')[0];
+  $('g-date').value=today.toISOString().split('T')[0];
+  $('a-time').value='';
   const sel=$('a-group');sel.innerHTML='';
   myGroups.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=g.emoji+' '+g.name;if(filterGid!=='all'&&filterGid===g.id)o.selected=true;sel.appendChild(o);});
   onGrpChange();openSheet('sh-add');
 };
 
-window.setType=type=>{addType=type;qsa('.type-opt').forEach(o=>o.classList.toggle('active',o.dataset.type===type));$('sec-tarea').classList.toggle('hidden',type==='gasto');$('sec-gasto').classList.toggle('hidden',type==='tarea');};
+window.toggleGastoSection=function(){
+  const tog=$('toggle-gasto'),sec=$('sec-gasto');
+  tog.classList.toggle('on');
+  const isOn=tog.classList.contains('on');
+  sec.classList.toggle('hidden',!isOn);
+  if(isOn){
+    // Auto-fill gasto date from tarea date
+    const tareaDate=$('a-date').value;
+    if(tareaDate)$('g-date').value=tareaDate;
+    else{const today=new Date();$('g-date').value=today.toISOString().split('T')[0];}
+  }
+};
 
 window.onGrpChange=()=>{
   const gid=$('a-group').value,g=myGroups.find(x=>x.id===gid)||{},names=g.memberNames||{};
@@ -1082,7 +1179,8 @@ window.doAdd=async()=>{
     return;
   }
 
-  if(addType==='gasto'||addType==='ambos'){
+  const hasGasto=$('toggle-gasto').classList.contains('on');
+  if(hasGasto){
     const gastoDateVal=$('g-date').value,importe=parseFloat($('a-importe').value),payerId=$('a-payer').value;
     if(!importe||importe<=0)return toast('Introduce un importe válido','err');
     if(!gastoDateVal)return toast('El gasto necesita una fecha','err');
@@ -1095,7 +1193,7 @@ window.doAdd=async()=>{
     try{const ref=await addDoc(collection(db,'groups',gid,'gastos'),{titulo:title,emoji:getEmoji(title),importe,date:gastoDate,payerId,payerName,dividido:checked,perPerson,deudas,saldado:false,createdAt:serverTimestamp()});gastoId=ref.id;gastoTitulo=title;gastoImporte=importe;}catch(e){toast('Error al añadir gasto','err');return;}
   }
 
-  if(addType==='tarea'||addType==='ambos'){
+  {
     const dateVal=$('a-date').value,timeVal=$('a-time').value,notes=$('a-notes').value.trim(),assignedTo=$('a-assignee').value;
     let finalDate=null;
     if(dateVal){finalDate=new Date(dateVal);if(timeVal){const[hh,mm]=timeVal.split(':');finalDate.setHours(parseInt(hh),parseInt(mm),0,0);}}
@@ -1104,6 +1202,7 @@ window.doAdd=async()=>{
 
   closeSheet('sh-add');
   $('a-title').value='';$('a-date').value='';$('a-time').value='';$('a-notes').value='';$('a-importe').value='';$('g-date').value='';
+  $('toggle-gasto').classList.remove('on');$('sec-gasto').classList.add('hidden');
   toast('Añadido ✓','ok');
 };
 
