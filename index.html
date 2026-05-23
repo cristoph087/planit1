@@ -1314,7 +1314,7 @@ function renderPlanes(){
       `;
 
       card.innerHTML=`
-        <div class="persona-hdr" onclick="togglePersona('${uid_key}')">
+        <div class="persona-hdr" id="phdr-${uid_key}">
           <div class="persona-av" style="background:${p.color}">${ini(p.name)}</div>
           <div class="persona-info">
             <div class="persona-name">${p.name}</div>
@@ -1322,7 +1322,7 @@ function renderPlanes(){
           </div>
           <div class="persona-right">
             <div class="persona-amt ${isDeuda?'neg':'pos'}">${isDeuda?'-':'+'}${fmtE(neto)}</div>
-            ${gaIds.length?`<button class="btn-saldar" onclick="event.stopPropagation();saldarPersona(${JSON.stringify(gaIds)})">Saldar lo mío</button>`:''}
+            ${gaIds.length?`<button class="btn-saldar" id="salbtn-${uid_key}">Saldar lo mío</button>`:''}
           </div>
           <span class="persona-arr" id="arr-${uid_key}">▾</span>
         </div>
@@ -1330,6 +1330,15 @@ function renderPlanes(){
           ${detalleHtml}
         </div>
       `;
+      // Attach events cleanly
+      card.querySelector(`#phdr-${uid_key}`).addEventListener('click',()=>togglePersona(uid_key));
+      const salBtn=card.querySelector(`#salbtn-${uid_key}`);
+      if(salBtn){
+        salBtn.addEventListener('click',e=>{
+          e.stopPropagation();
+          saldarPersona(gaIds);
+        });
+      }
       return card;
     };
 
