@@ -9,6 +9,13 @@
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600;700&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root{--navy:#14213D;--gold:#FCA311;--gd:#E08C00;--grey:#E5E5E5;--bg:#F2F2F7;--text:#1a1a1a;--muted:#888;--ok:#2D9E6B;--err:#E05252;}
+/* PALETAS */
+.pal-row{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:10px;cursor:pointer;border:2px solid transparent;transition:all .2s;}
+.pal-row.active{border-color:var(--gold);background:rgba(252,163,17,.06);}
+.pal-swatches{display:flex;gap:3px;}
+.pal-dot{width:16px;height:16px;border-radius:50%;}
+.pal-name{font-size:.85rem;font-weight:600;color:var(--navy);flex:1;}
+.pal-check{font-size:.9rem;color:var(--gold);}
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
 body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;display:flex;align-items:center;justify-content:center;}
 .shell{width:100%;max-width:430px;height:100vh;max-height:900px;background:var(--bg);display:flex;flex-direction:column;overflow:hidden;position:relative;}
@@ -514,44 +521,73 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
   <div class="sheet-in" id="sh-add-in">
     <div class="sh-hdl"></div>
     <div class="sh-tit" id="sh-add-tit">Añadir</div>
+
+    <!-- TIPO: Plan o Gasto suelto -->
+    <div class="type-opts" style="margin-bottom:14px;">
+      <div class="type-opt active" id="tipo-plan" onclick="setAddMode('plan')">
+        <div class="type-opt-ico">📅</div>
+        <div class="type-opt-lbl">Plan</div>
+      </div>
+      <div class="type-opt" id="tipo-gasto" onclick="setAddMode('gasto')">
+        <div class="type-opt-ico">💸</div>
+        <div class="type-opt-lbl">Gasto suelto</div>
+      </div>
+    </div>
+
     <span class="flbl">Grupo</span>
     <select id="a-group" class="min" onchange="onGrpChange()"></select>
     <span class="flbl">Título</span>
     <input id="a-title" class="min" placeholder="¿Qué es?">
-    <div class="fh-row" style="margin-top:12px;">
-      <div style="flex:1">
-        <span class="flbl" style="margin-top:0">Fecha</span>
-        <input id="a-date" class="min" type="date" style="background:white;">
+
+    <!-- SECCIÓN PLAN -->
+    <div id="sec-plan">
+      <div class="fh-row" style="margin-top:12px;">
+        <div style="flex:1">
+          <span class="flbl" style="margin-top:0">Fecha</span>
+          <input id="a-date" class="min" type="date" style="background:white;">
+        </div>
+        <div style="flex:0 0 95px">
+          <span class="flbl" style="margin-top:0">Hora</span>
+          <input id="a-time" class="min" type="time" step="60" style="background:white;">
+        </div>
       </div>
-      <div style="flex:0 0 95px">
-        <span class="flbl" style="margin-top:0">Hora</span>
-        <input id="a-time" class="min" type="time" step="60" style="background:white;">
+      <span class="flbl">Creado por</span>
+      <select id="a-assignee" class="min" style="background:white;"></select>
+      <span class="flbl">Notas (opcional)</span>
+      <input id="a-notes" class="min" placeholder="Notas..." style="background:white;">
+
+      <!-- TOGGLE GASTO dentro del plan -->
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:14px;padding:13px;background:rgba(45,158,107,.06);border-radius:12px;border-left:4px solid var(--ok);cursor:pointer;" onclick="toggleGastoSection()">
+        <div>
+          <div style="font-size:.82rem;font-weight:700;color:var(--ok)">💸 ¿Tiene gasto?</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:2px">Activa para dividir el gasto</div>
+        </div>
+        <div class="toggle" id="toggle-gasto" onclick="event.stopPropagation();toggleGastoSection()"></div>
+      </div>
+
+      <div id="sec-gasto" class="fsec fsec-gasto hidden" style="margin-top:8px;">
+        <div class="fsec-lbl">GASTO VINCULADO</div>
+        <span class="flbl" style="margin-top:0">Fecha del gasto</span>
+        <input id="g-date" class="min" type="date" style="background:white;">
+        <span class="flbl">Importe (€)</span>
+        <input id="a-importe" class="min" type="number" placeholder="0.00" step="0.01" min="0" style="background:white;">
+        <span class="flbl">¿Quién pagó?</span>
+        <select id="a-payer" class="min" style="background:white;"></select>
+        <span class="flbl">Dividir entre</span>
+        <div id="a-members"></div>
       </div>
     </div>
-    <span class="flbl">Creado por</span>
-    <select id="a-assignee" class="min" style="background:white;"></select>
-    <span class="flbl">Notas (opcional)</span>
-    <input id="a-notes" class="min" placeholder="Notas..." style="background:white;">
 
-    <!-- TOGGLE GASTO -->
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-top:16px;padding:14px;background:rgba(45,158,107,.06);border-radius:12px;border-left:4px solid var(--ok);cursor:pointer;" onclick="toggleGastoSection()">
-      <div>
-        <div style="font-size:.82rem;font-weight:700;color:var(--ok)">💸 ¿Tiene gasto?</div>
-        <div style="font-size:.7rem;color:var(--muted);margin-top:2px">Activa para dividir el gasto</div>
-      </div>
-      <div class="toggle" id="toggle-gasto" onclick="event.stopPropagation();toggleGastoSection()"></div>
-    </div>
-
-    <div id="sec-gasto" class="fsec fsec-gasto hidden" style="margin-top:8px;">
-      <div class="fsec-lbl">GASTO</div>
-      <span class="flbl" style="margin-top:0">Fecha del gasto</span>
-      <input id="g-date" class="min" type="date" style="background:white;">
+    <!-- SECCIÓN GASTO SUELTO -->
+    <div id="sec-gasto-suelto" class="hidden">
+      <span class="flbl">Fecha del gasto</span>
+      <input id="gs-date" class="min" type="date" style="background:white;">
       <span class="flbl">Importe (€)</span>
-      <input id="a-importe" class="min" type="number" placeholder="0.00" step="0.01" min="0" style="background:white;">
+      <input id="gs-importe" class="min" type="number" placeholder="0.00" step="0.01" min="0" style="background:white;">
       <span class="flbl">¿Quién pagó?</span>
-      <select id="a-payer" class="min" style="background:white;"></select>
+      <select id="gs-payer" class="min" style="background:white;"></select>
       <span class="flbl">Dividir entre</span>
-      <div id="a-members"></div>
+      <div id="gs-members"></div>
     </div>
     <div class="macts">
       <button class="btn-cancel" onclick="closeSheet('sh-add')">Cancelar</button>
@@ -560,7 +596,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
   </div>
 </div>
 
-<!-- SHEET DETALLE -->
+<!-- SHEET DETALLE ITEM -->
 <div id="sh-detail" class="sheet-ov hidden" onclick="if(event.target===this)closeSheet('sh-detail')">
   <div class="sheet-in" id="sh-detail-in">
     <div class="sh-hdl"></div>
@@ -571,7 +607,7 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
     <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
       <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Grupo</span><span id="d-group" style="font-weight:500;color:var(--navy)"></span></div>
       <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Fecha</span><span id="d-date" style="font-weight:500;color:var(--navy)"></span></div>
-      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Asignado</span><span id="d-assignee" style="font-weight:500;color:var(--navy)"></span></div>
+      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Creado por</span><span id="d-assignee" style="font-weight:500;color:var(--navy)"></span></div>
       <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Notas</span><span id="d-notes" style="color:#555;flex:1"></span></div>
       <div id="d-gasto-wrap" class="hidden" style="background:rgba(45,158,107,.08);border-radius:10px;padding:10px">
         <div style="font-size:.72rem;font-weight:700;color:var(--ok);margin-bottom:3px">💸 Gasto vinculado</div>
@@ -586,6 +622,29 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
   </div>
 </div>
 
+<!-- SHEET DETALLE GASTO SUELTO -->
+<div id="sh-gasto" class="sheet-ov hidden" onclick="if(event.target===this)closeSheet('sh-gasto')">
+  <div class="sheet-in" id="sh-gasto-in">
+    <div class="sh-hdl"></div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px">
+      <span id="dg-emoji" style="font-size:2rem">💶</span>
+      <div id="dg-title" style="font-family:'Playfair Display',serif;font-size:1.15rem;color:var(--navy);flex:1"></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:20px">
+      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Grupo</span><span id="dg-group" style="font-weight:500;color:var(--navy)"></span></div>
+      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Fecha</span><span id="dg-date" style="font-weight:500;color:var(--navy)"></span></div>
+      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Importe</span><span id="dg-importe" style="font-weight:700;color:var(--navy)"></span></div>
+      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Pagó</span><span id="dg-payer" style="font-weight:500;color:var(--navy)"></span></div>
+      <div style="display:flex;gap:10px;font-size:.88rem"><span style="color:var(--muted);width:76px">Estado</span><span id="dg-estado" style="font-weight:600"></span></div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn-cancel" onclick="deleteGasto()" style="color:var(--err);background:rgba(224,82,82,.08)">Eliminar</button>
+      <button class="btn-cancel" onclick="editGasto()" style="color:var(--navy);background:rgba(20,33,61,.06)">Editar</button>
+      <button class="btn-ok" id="dg-saldar-btn" onclick="saldarDesdeDetalle()">Saldar</button>
+    </div>
+  </div>
+</div>
+
 <!-- SHEET PERFIL -->
 <div id="sh-profile" class="sheet-ov hidden" onclick="if(event.target===this)closeSheet('sh-profile')">
   <div class="sheet-in" id="sh-profile-in">
@@ -593,6 +652,10 @@ body{font-family:'DM Sans',sans-serif;background:#0a0a0a;min-height:100vh;displa
     <div class="prof-av" id="p-av">?</div>
     <div class="prof-name" id="p-name">-</div>
     <div class="prof-email" id="p-email">-</div>
+    <div class="scard" style="margin:16px 0 12px;">
+      <div style="font-size:.8rem;font-weight:700;color:var(--navy);margin-bottom:12px;">🎨 Paleta de color</div>
+      <div id="palette-list"></div>
+    </div>
     <button class="btn-logout" onclick="doLogout()">Cerrar sesión</button>
   </div>
 </div>
@@ -610,7 +673,7 @@ const app=initializeApp(FB),auth=getAuth(app),db=getFirestore(app);
 let me=null,myGroups=[],allItems={},allGastos={},unsubs=[],dataUnsubs=[];
 let calY=new Date().getFullYear(),calM=new Date().getMonth();
 let curTab='tareas',filterGid='all',curItemId=null,curItemGid=null,addType='tarea';
-let editingItemId=null,editingItemGid=null,planesSubTab='planes';
+let editingItemId=null,editingItemGid=null,planesSubTab='planes',editingGastoId=null;
 
 const COLORS=['#14213D','#2D9E6B','#C4613E','#4A5BAD','#8B5CF6','#0891B2','#D97706','#E05252','#059669','#7C3AED'];
 const gColor=gid=>{const i=myGroups.findIndex(g=>g.id===gid);return COLORS[Math.max(0,i)%COLORS.length];};
@@ -657,7 +720,7 @@ onAuthStateChanged(auth,user=>{
 window.doLogin=async()=>{const e=$('l-email').value.trim(),p=$('l-pass').value;if(!e||!p)return toast('Rellena email y contraseña','err');try{await signInWithEmailAndPassword(auth,e,p);}catch(e){toast({'auth/invalid-credential':'Email o contraseña incorrectos'}[e.code]||'Error','err');}};
 window.doRegister=async()=>{const n=$('r-name').value.trim(),e=$('r-email').value.trim(),p=$('r-pass').value;if(!n||!e||!p)return toast('Rellena todos los campos','err');if(p.length<6)return toast('Contraseña mínimo 6 caracteres','err');try{const c=await createUserWithEmailAndPassword(auth,e,p);await updateProfile(c.user,{displayName:n});await setDoc(doc(db,'users',c.user.uid),{name:n,email:e,createdAt:serverTimestamp()});}catch(e){toast({'auth/email-already-in-use':'Email ya registrado'}[e.code]||'Error','err');}};
 window.doLogout=async()=>{if(!confirm('¿Cerrar sesión?'))return;unsubs.forEach(u=>u());unsubs=[];dataUnsubs.forEach(u=>u());dataUnsubs=[];await signOut(auth);closeSheet('sh-profile');};
-window.openProfile=()=>{$('p-av').textContent=ini(me?.displayName);$('p-name').textContent=me?.displayName||'-';$('p-email').textContent=me?.email||'-';openSheet('sh-profile');};
+window.openProfile=()=>{$('p-av').textContent=ini(me?.displayName);$('p-name').textContent=me?.displayName||'-';$('p-email').textContent=me?.email||'-';renderPaletteList();openSheet('sh-profile');};
 
 function startListening(){
   unsubs.forEach(u=>u());unsubs=[];dataUnsubs.forEach(u=>u());dataUnsubs=[];
@@ -774,6 +837,64 @@ function openDetail(item){
 
 window.toggleFromDetail=async()=>{if(!curItemId)return;const item=allItems[curItemGid]?.find(i=>i.id===curItemId);if(!item)return;if(!item.done&&!confirm('¿Marcar como completada?'))return;await updateDoc(doc(db,'groups',curItemGid,'items',curItemId),{done:!item.done,doneAt:!item.done?serverTimestamp():null});closeSheet('sh-detail');};
 window.deleteItem=async()=>{if(!curItemId||!confirm('¿Eliminar este elemento?'))return;await deleteDoc(doc(db,'groups',curItemGid,'items',curItemId));closeSheet('sh-detail');toast('Eliminado');};
+
+// Gasto detail
+let curGastoId=null,curGastoGid=null;
+window.openGastoDetail=function(ga){
+  curGastoId=ga.id;curGastoGid=ga.groupId;
+  const g=myGroups.find(g=>g.id===ga.groupId)||{};
+  $('dg-emoji').textContent=ga.emoji||'💶';
+  $('dg-title').textContent=ga.titulo;
+  $('dg-group').textContent=(g.emoji||'👥')+' '+g.name;
+  $('dg-date').textContent=fmtD(ga.createdAt)||fmtD(ga.date)||'-';
+  $('dg-importe').textContent=fmtE(ga.importe);
+  $('dg-payer').textContent=ga.payerName||'?';
+  const estado=$('dg-estado');
+  if(ga.saldado){estado.textContent='✓ Saldado';estado.style.color='var(--ok)';}
+  else{estado.textContent='Pendiente';estado.style.color='var(--err)';}
+  $('dg-saldar-btn').textContent=ga.saldado?'Reabrir':'Saldar';
+  openSheet('sh-gasto');
+};
+
+window.saldarDesdeDetalle=async()=>{
+  if(!curGastoId)return;
+  const gastos=allGastos[curGastoGid]||[];
+  const ga=gastos.find(g=>g.id===curGastoId);
+  if(!ga)return;
+  const newState=!ga.saldado;
+  if(newState&&!confirm('¿Marcar como saldado?'))return;
+  await updateDoc(doc(db,'groups',curGastoGid,'gastos',curGastoId),{saldado:newState,saldadoAt:newState?serverTimestamp():null});
+  closeSheet('sh-gasto');toast(newState?'¡Saldado! ✓':'Reabierto','ok');
+};
+
+window.deleteGasto=async()=>{
+  if(!curGastoId||!confirm('¿Eliminar este gasto?'))return;
+  await deleteDoc(doc(db,'groups',curGastoGid,'gastos',curGastoId));
+  closeSheet('sh-gasto');toast('Gasto eliminado');
+};
+
+window.editGasto=function(){
+  if(!curGastoId)return;
+  const ga=(allGastos[curGastoGid]||[]).find(g=>g.id===curGastoId);
+  if(!ga)return;
+  closeSheet('sh-gasto');
+  setAddMode('gasto');
+  // pre-fill
+  const sel=$('a-group');sel.innerHTML='';
+  myGroups.forEach(g=>{const o=document.createElement('option');o.value=g.id;o.textContent=g.emoji+' '+g.name;if(g.id===curGastoGid)o.selected=true;sel.appendChild(o);});
+  syncGastoSuelto();
+  $('a-title').value=ga.titulo||'';
+  setTimeout(()=>{
+    if(ga.date){const d=ga.date.toDate?ga.date.toDate():new Date(ga.date);$('gs-date').value=d.toISOString().split('T')[0];}
+    $('gs-importe').value=ga.importe||'';
+    if(ga.payerId)$('gs-payer').value=ga.payerId;
+  },100);
+  // mark as editing gasto
+  editingItemId='__gasto__';editingItemGid=curGastoGid;
+  editingGastoId=curGastoId;
+  $('sh-add-tit').textContent='Editar gasto';
+  openSheet('sh-add');
+};
 
 window.editItem=function(){
   if(!curItemId)return;
@@ -900,6 +1021,7 @@ function renderPlanes(){
         const color=gColor(ga.groupId);
         const div=document.createElement('div');div.className='pcard';div.style.borderLeftColor=color;
         div.innerHTML=`<div class="pcard-main"><div class="pcard-ico">${ga.emoji||'💶'}</div><div class="pcard-info"><div class="pcard-title">${ga.titulo}</div><div class="pcard-date">${fmtD(ga.createdAt)||''} · ${ga.groupEmoji} ${ga.groupName}</div><div class="pcard-pago"><div class="pcard-pago-av" style="background:${color}">${ini(ga.payerName||'?')}</div>Pagó ${ga.payerName||'?'}</div></div><div class="pcard-right"><div class="pcard-amt">${fmtE(ga.importe)}</div><div class="ptag ${ga.saldado?'ptag-ok':'ptag-pend'}">${ga.saldado?'✓ Saldado':'Pendiente'}</div></div></div>`;
+        div.onclick=()=>openGastoDetail(ga);
         body.appendChild(div);
       });
     }
@@ -1127,7 +1249,12 @@ window.openAdd=()=>{
   editingItemId=null;editingItemGid=null;
   $('sh-add-tit').textContent='Añadir';
   addType='tarea';
-  // Reset gasto toggle
+  // Reset mode to plan
+  addMode='plan';editingGastoId=null;
+  $('tipo-plan').classList.add('active');
+  $('tipo-gasto').classList.remove('active');
+  $('sec-plan').classList.remove('hidden');
+  $('sec-gasto-suelto').classList.add('hidden');
   $('toggle-gasto').classList.remove('on');
   $('sec-gasto').classList.add('hidden');
   // Autofill today's date
@@ -1140,13 +1267,35 @@ window.openAdd=()=>{
   onGrpChange();openSheet('sh-add');
 };
 
+let addMode='plan';
+
+window.setAddMode=function(mode){
+  addMode=mode;
+  $('tipo-plan').classList.toggle('active',mode==='plan');
+  $('tipo-gasto').classList.toggle('active',mode==='gasto');
+  $('sec-plan').classList.toggle('hidden',mode==='gasto');
+  $('sec-gasto-suelto').classList.toggle('hidden',mode==='plan');
+  // Sync payer/members for gasto suelto
+  if(mode==='gasto') syncGastoSuelto();
+};
+
+function syncGastoSuelto(){
+  const gid=$('a-group').value,g=myGroups.find(x=>x.id===gid)||{},names=g.memberNames||{};
+  const psel=$('gs-payer');psel.innerHTML='';
+  const div=$('gs-members');div.innerHTML='';
+  Object.entries(names).forEach(([uid,n])=>{
+    const o=document.createElement('option');o.value=uid;o.textContent=n;if(uid===me.uid)o.selected=true;psel.appendChild(o);
+    const lbl=document.createElement('label');lbl.className='mchk';lbl.innerHTML=`<input type="checkbox" value="${uid}" checked> ${n}`;div.appendChild(lbl);
+  });
+  const today=new Date();$('gs-date').value=today.toISOString().split('T')[0];
+}
+
 window.toggleGastoSection=function(){
   const tog=$('toggle-gasto'),sec=$('sec-gasto');
   tog.classList.toggle('on');
   const isOn=tog.classList.contains('on');
   sec.classList.toggle('hidden',!isOn);
   if(isOn){
-    // Auto-fill gasto date from tarea date
     const tareaDate=$('a-date').value;
     if(tareaDate)$('g-date').value=tareaDate;
     else{const today=new Date();$('g-date').value=today.toISOString().split('T')[0];}
@@ -1154,6 +1303,7 @@ window.toggleGastoSection=function(){
 };
 
 window.onGrpChange=()=>{
+  if(addMode==='gasto'){syncGastoSuelto();return;}
   const gid=$('a-group').value,g=myGroups.find(x=>x.id===gid)||{},names=g.memberNames||{};
   const asel=$('a-assignee');asel.innerHTML='<option value="">Sin asignar</option>';
   Object.entries(names).forEach(([uid,n])=>{const o=document.createElement('option');o.value=uid;o.textContent=n;asel.appendChild(o);});
@@ -1176,6 +1326,36 @@ window.doAdd=async()=>{
     let finalDate=null;
     if(dateVal){finalDate=new Date(dateVal);if(timeVal){const[hh,mm]=timeVal.split(':');finalDate.setHours(parseInt(hh),parseInt(mm),0,0);}}
     try{await updateDoc(doc(db,'groups',editingItemGid,'items',editingItemId),{title,emoji:getEmoji(title),date:finalDate,notes:notes||null,assignedTo:assignedTo||null});closeSheet('sh-add');$('a-title').value='';$('a-date').value='';$('a-time').value='';$('a-notes').value='';editingItemId=null;editingItemGid=null;toast('Actualizado ✓','ok');}catch(e){toast('Error','err');}
+    return;
+  }
+
+  // GASTO SUELTO MODE
+  if(addMode==='gasto'){
+    const gsDateVal=$('gs-date').value,importe=parseFloat($('gs-importe').value),payerId=$('gs-payer').value;
+    if(!importe||importe<=0)return toast('Introduce un importe válido','err');
+    if(!gsDateVal)return toast('El gasto necesita una fecha','err');
+    const checked=[...qsa('#gs-members input:checked')].map(i=>i.value);
+    if(!checked.length)return toast('Selecciona entre quiénes se divide','err');
+    const perPerson=importe/checked.length,deudas={};
+    checked.forEach(uid=>{if(uid!==payerId)deudas[uid]=perPerson;});
+    const payerName=g.memberNames?.[payerId]||'Tú';
+    // EDIT existing gasto
+    if(editingGastoId){
+      try{
+        await updateDoc(doc(db,'groups',editingItemGid,'gastos',editingGastoId),{titulo:title,emoji:getEmoji(title),importe,date:new Date(gsDateVal),payerId,payerName,perPerson,deudas});
+        closeSheet('sh-add');$('a-title').value='';$('gs-importe').value='';$('gs-date').value='';
+        editingItemId=null;editingItemGid=null;editingGastoId=null;
+        toast('Gasto actualizado ✓','ok');
+      }catch(e){toast('Error','err');}
+      return;
+    }
+    try{
+      await addDoc(collection(db,'groups',gid,'gastos'),{titulo:title,emoji:getEmoji(title),importe,date:new Date(gsDateVal),payerId,payerName,dividido:checked,perPerson,deudas,saldado:false,createdAt:serverTimestamp()});
+      closeSheet('sh-add');
+      $('a-title').value='';$('gs-importe').value='';$('gs-date').value='';
+      $('toggle-gasto').classList.remove('on');$('sec-gasto').classList.add('hidden');
+      toast('Gasto añadido ✓','ok');
+    }catch(e){toast('Error al añadir gasto','err');}
     return;
   }
 
@@ -1205,6 +1385,47 @@ window.doAdd=async()=>{
   $('toggle-gasto').classList.remove('on');$('sec-gasto').classList.add('hidden');
   toast('Añadido ✓','ok');
 };
+
+// PALETAS
+const PALETTES=[
+  {id:'black-gold',name:'Black & Gold',colors:['#14213D','#FCA311','#E5E5E5','#F2F2F7'],navy:'#14213D',gold:'#FCA311',gd:'#E08C00',grey:'#E5E5E5',bg:'#F2F2F7',ok:'#2D9E6B',err:'#E05252'},
+  {id:'bosque',name:'Bosque Profundo',colors:['#1A3325','#7EC8A0','#D4EDE1','#F4FAF7'],navy:'#1A3325',gold:'#7EC8A0',gd:'#5BAA82',grey:'#D4EDE1',bg:'#F4FAF7',ok:'#2D9E6B',err:'#E05252'},
+  {id:'terracota',name:'Terracota & Crema',colors:['#8B3A2A','#C4613E','#F5E6D3','#FBF6F0'],navy:'#8B3A2A',gold:'#C4613E',gd:'#A04D30',grey:'#F5E6D3',bg:'#FBF6F0',ok:'#2D9E6B',err:'#E05252'},
+  {id:'indigo',name:'Índigo & Arena',colors:['#2C3585','#4A5BAD','#F2D4A0','#FAFBFF'],navy:'#2C3585',gold:'#F2D4A0',gd:'#D4B070',grey:'#EEF0FA',bg:'#FAFBFF',ok:'#2D9E6B',err:'#E05252'},
+  {id:'grafito',name:'Grafito & Coral',colors:['#2A2A2A','#FF6B6B','#F2F2F2','#FFFFFF'],navy:'#2A2A2A',gold:'#FF6B6B',gd:'#E05252',grey:'#F2F2F2',bg:'#FFFFFF',ok:'#2D9E6B',err:'#E05252'},
+];
+
+let curPalette=PALETTES[0];
+
+function applyPalette(pal){
+  curPalette=pal;
+  const r=document.documentElement.style;
+  r.setProperty('--navy',pal.navy);
+  r.setProperty('--gold',pal.gold);
+  r.setProperty('--gd',pal.gd);
+  r.setProperty('--grey',pal.grey);
+  r.setProperty('--bg',pal.bg);
+  r.setProperty('--ok',pal.ok);
+  r.setProperty('--err',pal.err);
+  localStorage.setItem('planit-palette',pal.id);
+  renderPaletteList();
+}
+
+function renderPaletteList(){
+  const list=$('palette-list');if(!list)return;
+  list.innerHTML='';
+  PALETTES.forEach(pal=>{
+    const row=document.createElement('div');
+    row.className='pal-row'+(pal.id===curPalette.id?' active':'');
+    row.innerHTML=`<div class="pal-swatches">${pal.colors.map(c=>`<div class="pal-dot" style="background:${c}"></div>`).join('')}</div><div class="pal-name">${pal.name}</div>${pal.id===curPalette.id?'<span class="pal-check">✓</span>':''}`;
+    row.onclick=()=>applyPalette(pal);
+    list.appendChild(row);
+  });
+}
+
+// Load saved palette
+const savedPal=localStorage.getItem('planit-palette');
+if(savedPal){const p=PALETTES.find(x=>x.id===savedPal);if(p)applyPalette(p);}
 
 authTab('login');
 goTab('tareas');
